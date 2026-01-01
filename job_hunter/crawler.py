@@ -13,8 +13,21 @@ def fetch_html(url: str):
     """
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-        context = browser.new_context()
+        context = browser.new_context(
+            bypass_csp=True,
+            ignore_https_errors=True,
+        )
         page = context.new_page()
+        page.route(
+            "**/*",
+            lambda route: route.continue_(
+                headers={
+                    **route.request.headers,
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache",
+                }
+            ),
+        )
 
         page.set_default_navigation_timeout(60000)
         page.set_default_timeout(60000)
