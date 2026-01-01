@@ -43,6 +43,7 @@ const COLUMN_CONFIG = {
     displayName: "Keywords #",
     columnWidth: "70px",
     columnAlign: "center",
+    hide: true, // HIDE COLUMN
   },
   "Matched keywords": {
     displayName: "Keywords",
