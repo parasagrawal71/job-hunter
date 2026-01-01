@@ -186,4 +186,10 @@ def build_config(min_yoe: int):
             # Others
             "turkey",
         ],
+        #
+        #
+        # -------------------------
+        # Blocked companies: Skip these companies
+        # -------------------------
+        "blocked_companies": [],
     }

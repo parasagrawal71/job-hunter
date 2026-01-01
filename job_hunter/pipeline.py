@@ -59,6 +59,11 @@ def title_has_exclude_title(title, exclude_titles):
     return any(t in title for t in exclude_titles)
 
 
+def is_company_blocked(company, blocked_companies):
+    company = company.lower()
+    return company in blocked_companies
+
+
 def is_probable_job_detail_url(url):
     url = url.lower()
 
@@ -176,6 +181,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
 
                 log(f"\n🏢 [{company_index}] Company: {company}")
                 log(f"🔗 Career URL: {career_url}")
+
+                if is_company_blocked(company, config["blocked_companies"]):
+                    log(f"⚠️ Skipping blocked company: {company}")
+                    continue
 
                 listing_html, error = fetch_html(career_url)
                 if error:
