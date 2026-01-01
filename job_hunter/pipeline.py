@@ -1,4 +1,5 @@
 import csv
+import re
 from datetime import datetime
 
 from job_hunter.config import build_config
@@ -6,7 +7,7 @@ from job_hunter.crawler import fetch_html
 from job_hunter.extractor import (
     extract_job_links,
     extract_job_details,
-    extract_yoe,
+    extract_yoe_from_description,
 )
 from job_hunter.matcher import (
     match_keywords,
@@ -14,9 +15,12 @@ from job_hunter.matcher import (
     calculate_score,
 )
 
+failed_companies = []
+
 
 def log(msg: str):
     print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+
 
 def clean_csv_value(value):
     if not isinstance(value, str):
@@ -125,6 +129,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 "Company",
                 "Job title",
                 "Job link",
+                "YoE",
                 "Match percentage",
                 "Matched Keywords count",
                 "Matched keywords",
@@ -145,7 +150,12 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 log(f"\n🏢 [{company_index}] Company: {company}")
                 log(f"🔗 Career URL: {career_url}")
 
-                listing_html = fetch_html(career_url)
+                listing_html, error = fetch_html(career_url)
+                if error:
+                    failed_companies.append({"company": company, "error": error})
+                    log(f"⚠️ Failed to crawl company — {error}")
+                    continue
+
                 if not listing_html:
                     continue
 
@@ -163,9 +173,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     ):
                         continue
 
-                    if title_has_exclude_title(
-                        job_title, config["exclude_titles"]
-                    ):
+                    if title_has_exclude_title(job_title, config["exclude_titles"]):
                         continue
 
                     if not is_probable_job_detail_url(job_url):
@@ -186,10 +194,12 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                         description, config["allowed_locations"]
                     )
 
+                    yoe = extract_yoe_from_description(description)
+
                     job_data = {
                         "title": job_title,
                         "description": description,
-                        "yoe": extract_yoe(description),
+                        "yoe": yoe,
                         "matched_keywords": matched_keywords,
                     }
 
@@ -201,22 +211,35 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     if score == 0:
                         continue
 
-                    writer.writerow({
-                        "S.No": serial_no,
-                        "Company": clean_csv_value(company),
-                        "Job title": clean_csv_value(job_title),
-                        "Job link": clean_csv_value(job_url),
-                        "Match percentage": score,
-                        "Matched Keywords count": len(matched_keywords),
-                        "Matched keywords": clean_csv_value(", ".join(matched_keywords)),
-                        "Matched locations": clean_csv_value(", ".join(matched_locations)),
-                    })
-
+                    writer.writerow(
+                        {
+                            "S.No": serial_no,
+                            "Company": clean_csv_value(company),
+                            "Job title": clean_csv_value(job_title),
+                            "Job link": clean_csv_value(job_url),
+                            "YoE": yoe if yoe is not None else "",
+                            "Match percentage": score,
+                            "Matched Keywords count": len(matched_keywords),
+                            "Matched keywords": clean_csv_value(
+                                ", ".join(matched_keywords)
+                            ),
+                            "Matched locations": clean_csv_value(
+                                ", ".join(matched_locations)
+                            ),
+                        }
+                    )
 
                     csvfile.flush()
                     serial_no += 1
 
     # 🔑 FINAL SORT BEFORE EXIT
     sort_csv_in_place(output_file)
+
+    if failed_companies:
+        log("\n🚨 Companies with crawl errors:")
+        for idx, entry in enumerate(failed_companies, start=1):
+            log(f"{idx}. {entry['company']} — {entry['error']}")
+    else:
+        log("\n✅ No company-level crawl errors")
 
     log("🎉 Job Hunter finished")

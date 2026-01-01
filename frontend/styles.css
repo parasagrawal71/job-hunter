@@ -39,45 +39,6 @@ tbody td {
   vertical-align: top;
 }
 
-/* ---- COLUMN WIDTHS ---- */
-th:nth-child(1),
-td:nth-child(1) {
-  width: 50px;
-  text-align: center;
-}
-
-th:nth-child(2),
-td:nth-child(2) {
-  width: 160px;
-}
-
-th:nth-child(3),
-td:nth-child(3) {
-  width: 420px;
-}
-
-th:nth-child(4),
-td:nth-child(4) {
-  width: 100px;
-  text-align: right;
-}
-
-th:nth-child(5),
-td:nth-child(5) {
-  width: 180px;
-}
-
-th:nth-child(6),
-td:nth-child(6) {
-  width: 160px;
-}
-
-th:nth-child(7),
-td:nth-child(7) {
-  width: 80px;
-  text-align: center;
-}
-
 /* ---- LINKS ---- */
 a {
   color: #2563eb;

@@ -2,10 +2,14 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 from playwright._impl._errors import Error as PlaywrightError
 
 
-def fetch_html(url: str) -> str:
+def fetch_html(url: str):
     """
     Robust HTML fetcher.
-    NEVER throws — always returns HTML or empty string.
+
+    Returns:
+      html: str | None
+      error: str | None
+    NEVER throws.
     """
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
@@ -24,13 +28,16 @@ def fetch_html(url: str) -> str:
             page.wait_for_timeout(2000)
             html = page.content()
 
+            return html, None
+
         except (PlaywrightTimeoutError, PlaywrightError) as e:
+            error_msg = str(e).split("\n")[0]
+
             print(f"⚠️ Playwright failed for URL: {url}")
-            print(f"⚠️ Reason: {e}")
-            html = ""
+            print(f"⚠️ Reason: {error_msg}")
+
+            return None, error_msg
 
         finally:
             context.close()
             browser.close()
-
-        return html
