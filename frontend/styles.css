@@ -1,0 +1,86 @@
+body {
+  font-family: sans-serif;
+  padding: 24px;
+}
+
+h1 {
+  margin-bottom: 12px;
+}
+
+input {
+  padding: 6px 10px;
+  margin-bottom: 16px;
+  width: 260px;
+  font-size: 14px;
+}
+
+/* ---- TABLE FIX ---- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* 🔑 IMPORTANT */
+}
+
+thead th {
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 2px solid #ccc;
+  position: sticky;
+  top: 0;
+  background: white;
+}
+
+
+
+tbody td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #ddd;
+  vertical-align: top;
+}
+
+/* ---- COLUMN WIDTHS ---- */
+th:nth-child(1),
+td:nth-child(1) {
+  width: 50px;
+  text-align: center;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 160px;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 420px;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 100px;
+  text-align: right;
+}
+
+th:nth-child(5),
+td:nth-child(5) {
+  width: 180px;
+}
+
+th:nth-child(6),
+td:nth-child(6) {
+  width: 160px;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+  width: 80px;
+  text-align: center;
+}
+
+/* ---- LINKS ---- */
+a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+

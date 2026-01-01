@@ -1,0 +1,7 @@
+venv
+jobs.csv
+.DS_Store
+job_hunter.egg-info
+__pycache__/
+*.py[cod]
+*$py.class
