@@ -11,4 +11,12 @@ playwright install
 
 pip install -e .
 
-Run: job-hunter --input companies.csv
+Run: 
+    [Testing]
+    - job-hunter --input companies_test.csv
+    - Open frontend/index.html for dashboard
+
+    [All companies list]
+    - job-hunter --input companies.csv
+    
+
