@@ -23,6 +23,7 @@ async function loadJobs() {
 function renderTable(rows) {
   const tbody = document.querySelector("#jobs tbody");
   tbody.innerHTML = "";
+  document.getElementById("job-count").textContent = ` (${rows.length})`;
 
   rows.forEach(cols => {
     cols = cols.map(cleanupValue);

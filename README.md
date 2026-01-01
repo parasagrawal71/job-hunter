@@ -1,4 +1,4 @@
-# Job Hunter CLI
+# Job Hunter CLI    
 
 > unzip job-hunter.zip   
 > cd job-hunter 
@@ -15,13 +15,16 @@
 > pip install -e . 
 <br />   
 
-Run:    
+Run:
+- Edit job_hunter/config.py 
+<br /> 
+
 [Testing]   
 > job-hunter --input companies_test.csv   
 > Open frontend/index.html for dashboard   
-<br />   
+
 
 [All companies list]   
 > job-hunter --input companies.csv   
-    
+
 
