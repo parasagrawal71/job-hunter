@@ -36,7 +36,7 @@ Note:
 <br />  
 
 #### Dashboard:
-<img src="" />
+<img src="./assets/job_hunter_dashboard.png" />
 
 
 
