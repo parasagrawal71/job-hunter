@@ -15,7 +15,7 @@
 > pip install -e . 
 <br />   
 
-> Run:    
+Run:    
 [Testing]   
 > job-hunter --input companies_test.csv   
 > Open frontend/index.html for dashboard   
