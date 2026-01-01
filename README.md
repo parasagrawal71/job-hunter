@@ -28,7 +28,7 @@
 > job-hunter --input input/companies.csv   
 
 Note:
-- Edit job_hunter/config.py for modifying filters as per your requirements
+- Edit <a href="./job_hunter/config.py">job_hunter/config.py</a> for modifying filters as per your requirements
 - Companies list: <code>./input/companies.csv</code>
 - Output: <code>./jobs.csv</code>
 - Error: <code>./jobs_error.csv</code>
