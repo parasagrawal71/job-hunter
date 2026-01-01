@@ -176,6 +176,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     continue
 
                 job_links = extract_job_links(listing_html, career_url)
+                log(f"📦 Raw job links found: {len(job_links)}")
 
                 for jl in job_links:
                     job_title = jl.get("title")
