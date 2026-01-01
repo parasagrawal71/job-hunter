@@ -1,5 +1,5 @@
 venv
-jobs.csv
+# jobs.csv
 jobs_error.csv
 .DS_Store
 job_hunter.egg-info
