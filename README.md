@@ -1,6 +1,6 @@
 # Job Hunter CLI    
 
-> unzip job-hunter.zip   
+> git clone https://github.com/parasagrawal71/job-hunter.git    
 > cd job-hunter 
 <br />   
 
@@ -20,11 +20,11 @@ Run:
 <br /> 
 
 [Testing]   
-> job-hunter --input companies_test.csv   
+> job-hunter --input input/companies_test.csv   
 > Open frontend/index.html for dashboard   
 
 
 [All companies list]   
-> job-hunter --input companies.csv   
+> job-hunter --input input/companies.csv   
 
 

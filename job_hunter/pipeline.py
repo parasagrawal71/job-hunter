@@ -1,5 +1,6 @@
 import csv
 import re
+import time
 from datetime import datetime
 
 from job_hunter.config import build_config
@@ -116,10 +117,19 @@ def sort_csv_in_place(csv_path: str):
 
 
 def run_pipeline(input_file: str, min_yoe: int, output_file: str):
+    start_time = time.time()
     config = build_config(min_yoe)
 
     log("🚀 Job Hunter started")
     log(f"📄 Streaming results to {output_file}")
+
+    error_file = "jobs_error.csv"
+    error_csv = open(error_file, "w", newline="", encoding="utf-8")
+    error_writer = csv.DictWriter(
+        error_csv,
+        fieldnames=["Company", "Error", "Career URL"],
+    )
+    error_writer.writeheader()
 
     with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(
@@ -154,6 +164,12 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 if error:
                     failed_companies.append({"company": company, "error": error})
                     log(f"⚠️ Failed to crawl company — {error}")
+                    error_writer.writerow({
+                        "Company": company,
+                        "Error": error,
+                        "Career URL": career_url,
+                    })
+                    error_csv.flush()  # 🔑 ensure durability
                     continue
 
                 if not listing_html:
@@ -241,5 +257,14 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
             log(f"{idx}. {entry['company']} — {entry['error']}")
     else:
         log("\n✅ No company-level crawl errors")
+    error_csv.close()
+    log(f"📄 Company-level errors written to {error_file}")
 
     log("🎉 Job Hunter finished")
+
+    # Log total run time
+    end_time = time.time()
+    total_seconds = int(end_time - start_time)
+    minutes = total_seconds // 60
+    seconds = total_seconds % 60
+    log(f"⏱️ Total run time: {minutes}m {seconds}s")
