@@ -1,9 +1,8 @@
 def build_config(min_yoe: int):
     return {
-        #
-        #########################
+        # -------------------------
         # Include keywords: Crawls job description for these keywords
-        #########################
+        # -------------------------
         "include_keywords": [
             "javascript",
             "typescript",
@@ -18,15 +17,17 @@ def build_config(min_yoe: int):
             "graphql",
         ],
         #
-        #########################
+        #
+        # -------------------------
         # Exclude keywords: If any of these keywords are found in job description, skip the job
-        #########################
+        # -------------------------
         # "exclude_keywords": ["java", "spring boot"],
         "exclude_keywords": [],
         #
-        #########################
+        #
+        # -------------------------
         # Include titles: Matches job title with the words list in any order
-        #########################
+        # -------------------------
         "include_titles": [
             # ["software", "engineer"],
             # ["software", "developer"],
@@ -57,9 +58,10 @@ def build_config(min_yoe: int):
             ["senior", "member", "technical"],  # SMTS
         ],
         #
-        #########################
+        #
+        # -------------------------
         # Exclude titles: If any of these titles are found in job title, skip the job
-        #########################
+        # -------------------------
         "exclude_titles": [
             "test",
             "qa",
@@ -86,14 +88,16 @@ def build_config(min_yoe: int):
             "ios",
         ],
         #
-        #########################
+        #
+        # -------------------------
         # Allowed locations: Crawls job description for these locations
-        #########################
+        # -------------------------
         "allowed_locations": ["bangalore", "remote", "india"],
         #
-        #########################
+        #
+        # -------------------------
         # Blocked locations: If any of these locations are found in job description, skip the job
-        #########################
+        # -------------------------
         "blocked_locations": [
             # North America
             "canada",
