@@ -19,8 +19,25 @@ from job_hunter.matcher import (
 failed_companies = []
 
 
-def log(msg: str):
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+LOG_LEVELS = {
+    "DEBUG": 10,
+    "INFO": 20,
+    "WARN": 30,
+    "ERROR": 40,
+}
+
+CURRENT_LOG_LEVEL = LOG_LEVELS["INFO"]  # default
+
+
+def set_log_level(level: str):
+    global CURRENT_LOG_LEVEL
+    CURRENT_LOG_LEVEL = LOG_LEVELS.get(level.upper(), LOG_LEVELS["INFO"])
+
+
+def log(msg: str, level: str = "INFO"):
+    if LOG_LEVELS[level] < CURRENT_LOG_LEVEL:
+        return
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] [{level}] {msg}")
 
 
 def clean_csv_value(value):
@@ -173,45 +190,62 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     continue
 
                 if not listing_html:
+                    log("⚠️ Empty career page HTML", "DEBUG")
                     continue
 
                 job_links = extract_job_links(listing_html, career_url)
                 log(f"📦 Raw job links found: {len(job_links)}")
 
-                for jl in job_links:
+                for idx, jl in enumerate(job_links, start=1):
                     job_title = jl.get("title")
                     job_url = jl.get("link")
 
+                    log(f"\n➡️ Job [{idx}] Title: {job_title}", "DEBUG")
+                    log(f"🔗 Job URL: {job_url}", "DEBUG")
+
                     if not job_title or not job_url:
+                        log("⏭️ Skipped — missing title or URL", "DEBUG")
                         continue
 
                     if not title_matches_include_groups(
                         job_title, config["include_titles"]
                     ):
+                        log("⏭️ Skipped — title failed include_titles", "DEBUG")
                         continue
 
                     if title_has_exclude_title(job_title, config["exclude_titles"]):
+                        log("⏭️ Skipped — title matched exclude_titles", "DEBUG")
                         continue
 
                     if not is_probable_job_detail_url(job_url):
+                        log("⏭️ Skipped — not a probable job detail URL", "DEBUG")
                         continue
 
+                    log("🌐 Fetching job detail page...", "DEBUG")
                     details = extract_job_details(job_url)
                     description = details.get("description", "")
+                    log(f"📝 Description length: {len(description)} chars", "DEBUG")
+
                     if not description:
+                        log("⏭️ Skipped — empty job description", "DEBUG")
                         continue
 
                     matched_keywords = match_keywords(
                         description, config["include_keywords"]
                     )
+                    log(f"🔑 Keywords matched ({len(matched_keywords)}): {matched_keywords}", "DEBUG")
+
                     if not matched_keywords:
+                        log("⏭️ Skipped — no keywords matched", "DEBUG")
                         continue
 
                     matched_locations = extract_matched_locations(
                         description, config["allowed_locations"]
                     )
+                    log(f"📍 Matched locations: {matched_locations}", "DEBUG")
 
                     yoe = extract_yoe_from_description(description)
+                    log(f"📊 Extracted YOE: {yoe}", "DEBUG")
 
                     job_data = {
                         "title": job_title,
@@ -220,12 +254,17 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                         "matched_keywords": matched_keywords,
                     }
 
+                    log("🧪 Running validation rules...", "DEBUG")
                     is_ok, reason = validate_job(job_data, config)
                     if not is_ok:
+                        log(f"❌ Validation failed — {reason}", "DEBUG")
                         continue
 
                     score = calculate_score(job_data, config)
+                    log(f"📈 Match score: {score}%", "DEBUG")
+
                     if score == 0:
+                        log("⏭️ Skipped — score is 0", "DEBUG")
                         continue
 
                     writer.writerow(
@@ -247,6 +286,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     )
 
                     csvfile.flush()
+                    log("✅ Job written to CSV")
                     serial_no += 1
 
     # 🔑 FINAL SORT BEFORE EXIT
