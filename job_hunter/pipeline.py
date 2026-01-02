@@ -118,7 +118,8 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 company = row["company"].strip()
                 career_url = row["career_url"].strip()
 
-                log(f"\n\n\n🏢 [{company_index}] Company: {company}")
+                print("\n\n\n")
+                log(f"🏢 [{company_index}] Company: {company}")
                 log(f"🔗 Career URL: {career_url}")
 
                 if is_company_blocked(company, config["blocked_companies"]):
@@ -249,10 +250,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     serial_no += 1
 
     # 🔑 FINAL SORT BEFORE EXIT
-    log("\n\n")
+    print("\n\n")
     sort_csv_in_place(output_file)
 
-    log("\n\n")
+    print("\n\n")
     if failed_companies:
         log("🚨 Companies with crawl errors:")
         for idx, entry in enumerate(failed_companies, start=1):
@@ -263,12 +264,13 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
     error_csv.close()
     log(f"📄 Company-level errors written to {error_file}")
 
-    log("\n\n🎉 Job Hunter finished")
+    print("\n\n")
+    log("🎉 Job Hunter finished")
 
     # Log total run time
     end_time = time.time()
     total_seconds = int(end_time - start_time)
     minutes = total_seconds // 60
     seconds = total_seconds % 60
-    log("\n\n")
+    print("\n\n")
     log(f"⏱️ Total run time: {minutes}m {seconds}s")
