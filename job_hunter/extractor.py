@@ -46,6 +46,7 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
 def extract_job_details(job_url: str) -> dict:
     """
     Step 2: Visit job detail page and extract full description
+    Excludes footer-like sections generically.
     """
     html, error = fetch_html(job_url)
     if not html or error:
@@ -54,6 +55,16 @@ def extract_job_details(job_url: str) -> dict:
             "error": error,
         }
     soup = BeautifulSoup(html, "html.parser")
+
+    # 🔑 Remove footer-like sections generically
+    for el in soup.select(
+        '[class*="footer"], [class*="Footer"], [class*="FOOTER"]'
+    ):
+        el.decompose()
+
+    # Optional: also remove semantic footer tags
+    for el in soup.find_all("footer"):
+        el.decompose()
 
     text = soup.get_text(separator=" ", strip=True)
 

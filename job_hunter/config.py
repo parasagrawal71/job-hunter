@@ -86,6 +86,7 @@ def build_config(min_yoe: int):
             "manager",
             "principal",
             "staff",
+            "lead",
             "frontend",
             "devops",
             "cloud",
@@ -117,17 +118,17 @@ def build_config(min_yoe: int):
         # Blocked locations: If any of these locations are found in job description, skip the job
         # -------------------------
         "blocked_locations": [
-            # North America
+            # ---- North America
             "canada",
             "united states",
             "usa",
             "u.s.",
             "north america",
-            # Europe (general)
+            # ---- Europe (general)
             "europe",
             "eu",
             "emea",
-            # Europe (countries)
+            # ---- Europe (countries)
             "poland",
             "germany",
             "france",
@@ -158,7 +159,7 @@ def build_config(min_yoe: int):
             "latvia",
             "lithuania",
             "estonia",
-            # APAC (non-India)
+            # ---- APAC (non-India)
             "australia",
             "new zealand",
             "singapore",
@@ -168,23 +169,23 @@ def build_config(min_yoe: int):
             "china",
             "hong kong",
             "taiwan",
-            # Middle East
+            # ---- Middle East
             "uae",
             "united arab emirates",
             "dubai",
             "qatar",
             "saudi arabia",
-            # Americas (other)
+            # ---- Americas (other)
             "mexico",
             "brazil",
             "argentina",
             "chile",
             "colombia",
-            # Africa
+            # ---- Africa
             "south africa",
             "nigeria",
             "kenya",
-            # Others
+            # ---- Others
             "turkey",
         ],
         #
