@@ -8,6 +8,11 @@ let openMenu = null;
 const appliedJobsMap = new Map(); // job_link -> true
 
 /* =========================
+   UI STATE (NEW)
+========================= */
+let hideApplied = JSON.parse(localStorage.getItem("hideApplied") || "false");
+
+/* =========================
    LOAD APPLIED JOBS CSV
 ========================= */
 function loadAppliedJobs() {
@@ -44,7 +49,7 @@ function getColumnConfig(header) {
    LOAD JOBS
 ========================= */
 async function loadJobs() {
-  await loadAppliedJobs(); // ✅ load applied first
+  await loadAppliedJobs();
 
   const res = await fetch("../jobs.csv");
   const text = await res.text();
@@ -53,8 +58,43 @@ async function loadJobs() {
   headers = parseCSVLine(lines.shift());
   allRows = lines.map(parseCSVLine);
 
+  injectHideAppliedCheckbox(); // ✅ NEW
   renderHeader();
   renderTable(allRows);
+}
+
+/* =========================
+   HIDE APPLIED CHECKBOX (NEW)
+========================= */
+function injectHideAppliedCheckbox() {
+  const search = document.getElementById("search");
+  if (!search) return;
+
+  const label = document.createElement("label");
+  label.style.fontSize = "14px";
+  label.style.cursor = "pointer";
+  label.style.display = "flex";
+  label.style.alignItems = "flex-start";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = "hide-applied";
+  checkbox.checked = hideApplied;
+  checkbox.style.width = "16px";
+  checkbox.style.height = "16px";
+  checkbox.style.marginTop = "-1px";
+  checkbox.style.cursor = "pointer";
+
+  checkbox.onchange = () => {
+    hideApplied = checkbox.checked;
+    localStorage.setItem("hideApplied", JSON.stringify(hideApplied));
+    renderTable(allRows);
+  };
+
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode("Hide applied"));
+
+  search.parentNode.appendChild(label);
 }
 
 /* =========================
@@ -92,14 +132,22 @@ function renderTable(rows) {
   const tbody = document.querySelector("#jobs tbody");
   tbody.innerHTML = "";
 
-  document.getElementById("job-count").textContent = ` (${rows.length})`;
+  const linkIdx = headers.findIndex((h) =>
+    h.toLowerCase().includes("job link"),
+  );
 
-  rows.forEach((cols) => {
+  const visibleRows = rows.filter((cols) => {
+    const jobLink = cols[linkIdx];
+    if (hideApplied && appliedJobsMap.get(jobLink) === true) {
+      return false;
+    }
+    return true;
+  });
+
+  document.getElementById("job-count").textContent = ` (${visibleRows.length})`;
+
+  visibleRows.forEach((cols, visibleRowIndex) => {
     const tr = document.createElement("tr");
-
-    const linkIdx = headers.findIndex((h) =>
-      h.toLowerCase().includes("job link"),
-    );
     const jobLink = cols[linkIdx];
 
     if (appliedJobsMap.get(jobLink) === true) {
@@ -121,7 +169,8 @@ function renderTable(rows) {
         a.textContent = "Open";
         td.appendChild(a);
       } else {
-        td.textContent = cols[idx] ?? "";
+        if (cfg.displayName === "#") td.textContent = visibleRowIndex + 1;
+        else td.textContent = cols[idx] ?? "";
       }
 
       tr.appendChild(td);
@@ -209,7 +258,7 @@ document.addEventListener("click", () => {
 });
 
 /* =========================
-   SEARCH (RESTORED ✅)
+   SEARCH
 ========================= */
 document.getElementById("search").addEventListener("input", (e) => {
   const query = e.target.value.toLowerCase().trim();
