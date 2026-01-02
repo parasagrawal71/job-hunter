@@ -249,23 +249,26 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     serial_no += 1
 
     # 🔑 FINAL SORT BEFORE EXIT
+    log("\n\n")
     sort_csv_in_place(output_file)
 
+    log("\n\n")
     if failed_companies:
-        log("\n🚨 Companies with crawl errors:")
+        log("🚨 Companies with crawl errors:")
         for idx, entry in enumerate(failed_companies, start=1):
             log(f"{idx}. {entry['company']} — {entry['error']}")
     else:
-        log("\n✅ No company-level crawl errors")
+        log("✅ No company-level crawl errors")
 
     error_csv.close()
     log(f"📄 Company-level errors written to {error_file}")
 
-    log("🎉 Job Hunter finished")
+    log("\n\n🎉 Job Hunter finished")
 
     # Log total run time
     end_time = time.time()
     total_seconds = int(end_time - start_time)
     minutes = total_seconds // 60
     seconds = total_seconds % 60
+    log("\n\n")
     log(f"⏱️ Total run time: {minutes}m {seconds}s")
