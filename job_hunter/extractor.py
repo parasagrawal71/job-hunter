@@ -2,6 +2,7 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from job_hunter.crawler import fetch_html
+from job_hunter.utils.log import log
 
 
 def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
@@ -12,8 +13,22 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
     jobs = []
 
     for a in soup.select("a"):
-        title = a.get_text(strip=True)
+        title = a.get_text(strip=True)  # 1️⃣ Try direct anchor text
+        # log(f"🔎 direct anchor text - title: {title}", "DEBUG")
         href = a.get("href")
+
+        # 2️⃣ If anchor text is empty, try nested title-like elements
+        if not title:
+            log(f"🔎 looking for nested title-like elements: {a}", "DEBUG")
+            # Find any descendant whose class contains "title"
+            title_candidate = a.select_one(
+                '[class*="title"], [class*="Title"], [class*="TITLE"]'
+            )
+            log(f"🔎 title_candidate: {title_candidate}", "DEBUG")
+
+            if title_candidate:
+                title = title_candidate.get_text(strip=True)
+            log(f"🔎 title: {title}", "DEBUG")
 
         if not title or not href:
             continue
@@ -75,6 +90,7 @@ def extract_yoe_from_description(description: str):
             return int(match.group(1))
 
     return None
+
 
 def extract_matched_locations(description, allowed_locations):
     desc = description.lower()
