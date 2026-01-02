@@ -66,6 +66,7 @@ def build_config(min_yoe: int):
             ["senior", "full-stack", "developer"],
             ["senior", "backend", "engineer"],
             ["senior", "backend", "developer"],
+            ["senior", "software", "development", "engineer"],
             ["software", "development", "engineer", "iii"],
             ["software", "development", "engineer", "3"],
             ["software", "development", "engineer", "iv"],

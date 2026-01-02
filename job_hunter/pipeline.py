@@ -18,7 +18,7 @@ from job_hunter.matcher import (
     is_company_blocked,
     is_probable_job_detail_url,
 )
-from job_hunter.utils.log import log
+from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
 
 failed_companies = []
@@ -68,6 +68,9 @@ def sort_csv_in_place(csv_path: str):
 
 
 def run_pipeline(input_file: str, min_yoe: int, output_file: str):
+    if input_file.endswith("_test.csv"):
+        set_log_level("DEBUG")
+
     start_time = time.time()
     config = build_config(min_yoe)
 
@@ -115,7 +118,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 company = row["company"].strip()
                 career_url = row["career_url"].strip()
 
-                log(f"\n🏢 [{company_index}] Company: {company}")
+                log(f"\n\n\n🏢 [{company_index}] Company: {company}")
                 log(f"🔗 Career URL: {career_url}")
 
                 if is_company_blocked(company, config["blocked_companies"]):
