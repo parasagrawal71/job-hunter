@@ -46,3 +46,46 @@ def calculate_score(job, config):
     )
 
     return round(score * 100, 2)
+
+def title_matches_include_groups(title, include_title_groups):
+    title = title.lower()
+    for group in include_title_groups:
+        if all(word in title for word in group):
+            return True
+    return False
+
+def title_has_exclude_title(title, exclude_titles):
+    title = title.lower()
+    return any(t in title for t in exclude_titles)
+
+
+def is_company_blocked(company, blocked_companies):
+    company = company.lower()
+    return company in blocked_companies
+
+
+def is_probable_job_detail_url(url):
+    url = url.lower()
+
+    bad_patterns = [
+        "/collections/",
+        "/software/",
+        "/products/",
+        "/solutions/",
+        "/platform/",
+        "/jira/",
+        "/confluence/",
+        "/bitbucket/",
+    ]
+
+    if any(p in url for p in bad_patterns):
+        return False
+
+    good_patterns = [
+        "/careers/details/",
+        "/jobs/",
+        "/job/",
+        "/position/",
+    ]
+
+    return any(p in url for p in good_patterns)

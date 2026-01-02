@@ -70,3 +70,21 @@ def extract_yoe_from_description(description: str):
             return int(match.group(1))
 
     return None
+
+def extract_matched_locations(description, allowed_locations):
+    desc = description.lower()
+
+    LOCATION_ALIASES = {
+        "bangalore": ["bangalore", "bengaluru", "blr"],
+        "remote": ["remote", "work from home", "wfh", "anywhere"],
+        "india": ["india"],
+    }
+
+    matched = []
+    for canonical, aliases in LOCATION_ALIASES.items():
+        if canonical not in allowed_locations:
+            continue
+        if any(alias in desc for alias in aliases):
+            matched.append(canonical)
+
+    return matched

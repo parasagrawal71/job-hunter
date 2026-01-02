@@ -1,7 +1,5 @@
 import csv
-import re
 import time
-from datetime import datetime
 
 from job_hunter.config import build_config
 from job_hunter.crawler import fetch_html
@@ -9,105 +7,21 @@ from job_hunter.extractor import (
     extract_job_links,
     extract_job_details,
     extract_yoe_from_description,
+    extract_matched_locations,
 )
 from job_hunter.matcher import (
     match_keywords,
     validate_job,
     calculate_score,
+    title_matches_include_groups,
+    title_has_exclude_title,
+    is_company_blocked,
+    is_probable_job_detail_url,
 )
+from job_hunter.utils.log import log
+from job_hunter.utils.utils import clean_string_value
 
 failed_companies = []
-
-
-LOG_LEVELS = {
-    "DEBUG": 10,
-    "INFO": 20,
-    "WARN": 30,
-    "ERROR": 40,
-}
-
-CURRENT_LOG_LEVEL = LOG_LEVELS["INFO"]  # default
-
-
-def set_log_level(level: str):
-    global CURRENT_LOG_LEVEL
-    CURRENT_LOG_LEVEL = LOG_LEVELS.get(level.upper(), LOG_LEVELS["INFO"])
-
-
-def log(msg: str, level: str = "INFO"):
-    if LOG_LEVELS[level] < CURRENT_LOG_LEVEL:
-        return
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] [{level}] {msg}")
-
-
-def clean_csv_value(value):
-    if not isinstance(value, str):
-        return value
-    return value.replace('"', "").strip()
-
-
-def title_matches_include_groups(title, include_title_groups):
-    title = title.lower()
-    for group in include_title_groups:
-        if all(word in title for word in group):
-            return True
-    return False
-
-
-def title_has_exclude_title(title, exclude_titles):
-    title = title.lower()
-    return any(t in title for t in exclude_titles)
-
-
-def is_company_blocked(company, blocked_companies):
-    company = company.lower()
-    return company in blocked_companies
-
-
-def is_probable_job_detail_url(url):
-    url = url.lower()
-
-    bad_patterns = [
-        "/collections/",
-        "/software/",
-        "/products/",
-        "/solutions/",
-        "/platform/",
-        "/jira/",
-        "/confluence/",
-        "/bitbucket/",
-    ]
-
-    if any(p in url for p in bad_patterns):
-        return False
-
-    good_patterns = [
-        "/careers/details/",
-        "/jobs/",
-        "/job/",
-        "/position/",
-    ]
-
-    return any(p in url for p in good_patterns)
-
-
-def extract_matched_locations(description, allowed_locations):
-    desc = description.lower()
-
-    LOCATION_ALIASES = {
-        "bangalore": ["bangalore", "bengaluru", "blr"],
-        "remote": ["remote", "work from home", "wfh", "anywhere"],
-        "india": ["india"],
-    }
-
-    matched = []
-    for canonical, aliases in LOCATION_ALIASES.items():
-        if canonical not in allowed_locations:
-            continue
-        if any(alias in desc for alias in aliases):
-            matched.append(canonical)
-
-    return matched
 
 
 def sort_csv_in_place(csv_path: str):
@@ -190,11 +104,13 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 if error:
                     failed_companies.append({"company": company, "error": error})
                     log(f"⚠️ Failed to crawl company — {error}")
-                    error_writer.writerow({
-                        "Company": company,
-                        "Error": error,
-                        "Career URL": career_url,
-                    })
+                    error_writer.writerow(
+                        {
+                            "Company": company,
+                            "Error": error,
+                            "Career URL": career_url,
+                        }
+                    )
                     error_csv.flush()  # 🔑 ensure durability
                     continue
 
@@ -242,7 +158,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     matched_keywords = match_keywords(
                         description, config["include_keywords"]
                     )
-                    log(f"🔑 Keywords matched ({len(matched_keywords)}): {matched_keywords}", "DEBUG")
+                    log(
+                        f"🔑 Keywords matched ({len(matched_keywords)}): {matched_keywords}",
+                        "DEBUG",
+                    )
 
                     if not matched_keywords:
                         log("⏭️ Skipped — no keywords matched", "DEBUG")
@@ -279,16 +198,16 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     writer.writerow(
                         {
                             "S.No": serial_no,
-                            "Company": clean_csv_value(company),
-                            "Job title": clean_csv_value(job_title),
-                            "Job link": clean_csv_value(job_url),
+                            "Company": clean_string_value(company),
+                            "Job title": clean_string_value(job_title),
+                            "Job link": clean_string_value(job_url),
                             "YoE": yoe if yoe is not None else "",
                             "Match percentage": score,
                             "Matched Keywords count": len(matched_keywords),
-                            "Matched keywords": clean_csv_value(
+                            "Matched keywords": clean_string_value(
                                 ", ".join(matched_keywords)
                             ),
-                            "Matched locations": clean_csv_value(
+                            "Matched locations": clean_string_value(
                                 ", ".join(matched_locations)
                             ),
                         }
