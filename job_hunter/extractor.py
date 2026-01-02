@@ -33,6 +33,11 @@ def extract_job_details(job_url: str) -> dict:
     Step 2: Visit job detail page and extract full description
     """
     html, error = fetch_html(job_url)
+    if not html or error:
+        return {
+            "description": "",
+            "error": error,
+        }
     soup = BeautifulSoup(html, "html.parser")
 
     text = soup.get_text(separator=" ", strip=True)
