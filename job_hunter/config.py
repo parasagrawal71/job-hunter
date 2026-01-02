@@ -105,6 +105,7 @@ def build_config(min_yoe: int):
             "contractor",
             "android",
             "ios",
+            "analyst",
         ],
         #
         #

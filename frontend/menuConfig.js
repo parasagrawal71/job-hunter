@@ -4,7 +4,7 @@
 window.ACTION_MENU_ITEMS = [
   {
     id: "toggle-applied",
-    displayName: "Toggle Applied Status",
+    displayName: "Toggle status",
     callback: ({ cols, headers, toggleApplied, appliedJobsMap }) => {
       const linkIdx = headers.findIndex((h) =>
         h.toLowerCase().includes("job link"),
