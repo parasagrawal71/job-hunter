@@ -24,6 +24,21 @@ from job_hunter.utils.utils import clean_string_value
 failed_companies = []
 
 
+# 🔹 NEW: load existing job links for deduplication
+def load_existing_job_links(csv_path: str) -> set:
+    existing_links = set()
+    try:
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                link = row.get("Job link")
+                if link:
+                    existing_links.add(link.strip())
+    except FileNotFoundError:
+        pass
+    return existing_links
+
+
 def sort_csv_in_place(csv_path: str):
     log("🔄 Sorting CSV before exit...")
 
@@ -59,6 +74,11 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
     log("🚀 Job Hunter started")
     log(f"📄 Streaming results to {output_file}")
 
+    # 🔹 NEW: load existing jobs (append-only behavior)
+    existing_job_links = load_existing_job_links(output_file)
+    serial_no = len(existing_job_links) + 1
+    csv_exists = bool(existing_job_links)
+
     error_file = "jobs_error.csv"
     error_csv = open(error_file, "w", newline="", encoding="utf-8")
     error_writer = csv.DictWriter(
@@ -67,7 +87,8 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
     )
     error_writer.writeheader()
 
-    with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
+    # 🔹 CHANGED: open in append mode instead of write
+    with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(
             csvfile,
             fieldnames=[
@@ -82,9 +103,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                 "Matched locations",
             ],
         )
-        writer.writeheader()
 
-        serial_no = 1
+        # 🔹 NEW: write header only if file is new
+        if not csv_exists:
+            writer.writeheader()
 
         with open(input_file, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -111,7 +133,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                             "Career URL": career_url,
                         }
                     )
-                    error_csv.flush()  # 🔑 ensure durability
+                    error_csv.flush()
                     continue
 
                 if not listing_html:
@@ -130,6 +152,11 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
 
                     if not job_title or not job_url:
                         log("⏭️ Skipped — missing title or URL", "DEBUG")
+                        continue
+
+                    # 🔹 NEW: dedupe by job link
+                    if job_url in existing_job_links:
+                        log("⏭️ Skipped — job already exists in CSV", "DEBUG")
                         continue
 
                     if not title_matches_include_groups(
@@ -214,6 +241,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     )
 
                     csvfile.flush()
+                    existing_job_links.add(job_url)
                     log("✅ Job written to CSV")
                     serial_no += 1
 
@@ -226,6 +254,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
             log(f"{idx}. {entry['company']} — {entry['error']}")
     else:
         log("\n✅ No company-level crawl errors")
+
     error_csv.close()
     log(f"📄 Company-level errors written to {error_file}")
 
