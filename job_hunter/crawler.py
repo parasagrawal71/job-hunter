@@ -38,6 +38,21 @@ def fetch_html(url: str):
                 wait_until="domcontentloaded",
                 timeout=60000
             )
+
+            # 🔑 Try waiting for known job-card selectors (best effort)
+            JOB_SELECTORS = [
+                "a.apply-card",          # Zeta
+                "[data-testid='job']",   # some ATS
+                "a[href*='job']",        # generic fallback
+                "a[href*='careers']",
+            ]
+            for selector in JOB_SELECTORS:
+                try:
+                    page.wait_for_selector(selector, timeout=8000)
+                    break
+                except Exception:
+                    pass
+
             page.wait_for_timeout(2000)
             html = page.content()
 
