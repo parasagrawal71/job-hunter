@@ -13,7 +13,7 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
     jobs = []
 
     for a in soup.select("a"):
-        title = a.get_text(strip=True)  # 1️⃣ Try direct anchor text
+        title = a.get_text(separator=" ", strip=True)  # 1️⃣ Try direct anchor text
         # log(f"🔎 direct anchor text - title: {title}", "DEBUG")
         href = a.get("href")
 
@@ -27,7 +27,7 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
             log(f"🔎 title_candidate: {title_candidate}", "DEBUG")
 
             if title_candidate:
-                title = title_candidate.get_text(strip=True)
+                title = title_candidate.get_text(separator=" ", strip=True)
             log(f"🔎 title: {title}", "DEBUG")
 
         if not title or not href:

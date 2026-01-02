@@ -18,11 +18,17 @@ def contains_whole_word(text: str, word: str) -> bool:
 
 def validate_job(job, config):
     desc = job["description"].lower()
+    title = job["title"].lower()
 
     # ❌ Blocked locations (log exact match)
     for loc in config.get("blocked_locations", []):
-        if contains_whole_word(desc, loc):
-            return False, f"blocked location detected: '{loc}'"
+        # title contains blocked location
+        if contains_whole_word(title, loc):
+            return False, f"blocked location detected in title: '{loc}'"
+
+        # # description contains blocked location
+        # if contains_whole_word(desc, loc):
+        #     return False, f"blocked location detected in description: '{loc}'"
 
     # ❌ Excluded tech keywords
     for k in config["exclude_keywords"]:
