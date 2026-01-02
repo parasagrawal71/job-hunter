@@ -30,13 +30,17 @@ def validate_job(job, config):
         # if contains_whole_word(desc, loc):
         #     return False, f"blocked location detected in description: '{loc}'"
 
-    # ❌ Excluded tech keywords
-    for k in config["exclude_keywords"]:
-        if k in desc:
-            return False, f"excluded keyword found: '{k}'"
+    # # ❌ Excluded tech keywords
+    # for k in config["exclude_keywords"]:
+    #     if contains_whole_word(desc, k):
+    #         return False, f"excluded keyword found: '{k}'"
 
     # ❌ Location not allowed (positive filter)
-    if not any(loc in desc for loc in config["allowed_locations"]):
+    isAnyLocFound = False
+    for loc in config.get("allowed_locations", []):
+        if contains_whole_word(desc, loc):
+            isAnyLocFound = True
+    if isAnyLocFound == False:
         return (
             False,
             f"location not allowed (expected one of {config['allowed_locations']})",
@@ -67,6 +71,15 @@ def title_has_exclude_title(title, exclude_titles):
     return any(t in title for t in exclude_titles)
 
 
+def title_has_exclude_keywords(title, exclude_keywords):
+    title = title.lower()
+    for keyword in exclude_keywords:
+        if contains_whole_word(title, keyword):
+            log(f"excluded keyword found in title: '{keyword}'", "DEBUG")
+            return False
+    return True, ""
+
+
 def is_company_blocked(company, blocked_companies):
     company = company.lower()
     return company in blocked_companies
@@ -75,10 +88,10 @@ def is_company_blocked(company, blocked_companies):
 def is_probable_job_detail_url(url):
     url = url.lower()
 
-    log(f"🔎 checking job detail URL: {url}", "DEBUG");
+    log(f"🔎 checking job detail URL: {url}", "DEBUG")
 
     if not (url.startswith("https://") or url.startswith("www.")):
-        log(f"doesn't start with https:// or www.", "DEBUG");
+        log(f"doesn't start with https:// or www.", "DEBUG")
         return False
 
     good_patterns = [
@@ -98,7 +111,7 @@ def is_probable_job_detail_url(url):
         "/roles/",
     ]
     if any(p in url for p in good_patterns):
-        log(f"passed good patterns", "DEBUG");
+        log(f"passed good patterns", "DEBUG")
         return True
 
     bad_patterns = [

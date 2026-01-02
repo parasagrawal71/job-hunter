@@ -38,8 +38,7 @@ def build_config(min_yoe: int):
         # -------------------------
         # Exclude keywords: If any of these keywords are found in job description, skip the job
         # -------------------------
-        # "exclude_keywords": ["java", "spring boot"],
-        "exclude_keywords": [],
+        "exclude_keywords": ["java", "spring boot", "c++", "c", "c#"],
         #
         #
         # -------------------------
