@@ -16,6 +16,7 @@ from job_hunter.matcher import (
     title_matches_include_groups,
     title_has_exclude_title,
     title_has_exclude_keywords,
+    title_has_blocked_locations,
     is_company_blocked,
     is_probable_job_detail_url,
 )
@@ -176,6 +177,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
 
                     if title_has_exclude_keywords(job_title, config["exclude_keywords"]):
                         log("⏭️ Skipped — title matched exclude_keywords", "DEBUG")
+                        continue
+
+                    if title_has_blocked_locations(job_title, config["blocked_locations"]):
+                        log("⏭️ Skipped — title matched blocked_locations", "DEBUG")
                         continue
 
                     if not is_probable_job_detail_url(job_url):

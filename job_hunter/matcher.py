@@ -68,7 +68,11 @@ def title_matches_include_groups(title, include_title_groups):
 
 def title_has_exclude_title(title, exclude_titles):
     title = title.lower()
-    return any(t in title for t in exclude_titles)
+    for exclude_title in exclude_titles:
+        if contains_whole_word(title, exclude_title):
+            log(f"excluded title found in title: '{exclude_title}'", "DEBUG")
+            return False
+    return True
 
 
 def title_has_exclude_keywords(title, exclude_keywords):
@@ -78,6 +82,14 @@ def title_has_exclude_keywords(title, exclude_keywords):
             log(f"excluded keyword found in title: '{keyword}'", "DEBUG")
             return False
     return True, ""
+
+def title_has_blocked_locations(title, blocked_locations):
+    title = title.lower()
+    for loc in blocked_locations:
+        if contains_whole_word(title, loc):
+            log(f"blocked location found in title: '{loc}'", "DEBUG")
+            return False
+    return True
 
 
 def is_company_blocked(company, blocked_companies):
