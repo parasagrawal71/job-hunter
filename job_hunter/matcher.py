@@ -141,3 +141,11 @@ def is_probable_job_detail_url(url):
         return False
 
     return True
+
+def extracted_locations_has_blocked_locations(extracted_locations, blocked_locations):
+    for loc in extracted_locations:
+        loc = loc.lower()
+        if loc in blocked_locations:
+            log(f"blocked location found in extracted locations: '{loc}'", "DEBUG")
+            return True
+    return False

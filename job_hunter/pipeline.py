@@ -1,5 +1,6 @@
 import csv
 import time
+import re
 
 from job_hunter.config import build_config
 from job_hunter.crawler import fetch_html
@@ -8,6 +9,7 @@ from job_hunter.extractor import (
     extract_job_details,
     extract_yoe_from_description,
     extract_matched_locations,
+    extract_job_location,
 )
 from job_hunter.matcher import (
     match_keywords,
@@ -19,6 +21,7 @@ from job_hunter.matcher import (
     title_has_blocked_locations,
     is_company_blocked,
     is_probable_job_detail_url,
+    extracted_locations_has_blocked_locations,
 )
 from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
@@ -70,7 +73,9 @@ def sort_csv_in_place(csv_path: str):
 
 
 def run_pipeline(input_file: str, min_yoe: int, output_file: str):
-    if input_file.endswith("_test.csv"):
+    pattern = re.compile(r".*_test.*\.csv$")
+    if bool(pattern.match(input_file)):
+        log("Running in test mode")
         set_log_level("DEBUG")
 
     start_time = time.time()
@@ -194,6 +199,16 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
 
                     if not description:
                         log("⏭️ Skipped — empty job description", "DEBUG")
+                        continue
+
+                    log("📍 Extracting job locations...", "DEBUG")
+                    extracted_locations = extract_job_location(job_url)
+                    log(f"📍 Extracted locations: {extracted_locations}", "DEBUG")
+
+                    if extracted_locations_has_blocked_locations(
+                        extracted_locations, config["blocked_locations"]
+                    ):
+                        log("⏭️ Skipped — extracted location matched blocked_locations", "DEBUG")
                         continue
 
                     matched_keywords = match_keywords(

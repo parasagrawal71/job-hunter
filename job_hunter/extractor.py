@@ -120,3 +120,48 @@ def extract_matched_locations(description, allowed_locations):
             matched.append(canonical)
 
     return matched
+
+
+def extract_job_location(job_url: str) -> list[str]:
+    """
+    Extract job location(s) from job detail page.
+
+    Strategy:
+    - Find elements whose class contains 'location' (case-insensitive)
+    - Works for nested and non-nested structures
+    - Ignores SVG/icon text
+    - Normalizes whitespace
+    - Returns unique location strings
+    """
+
+    html, error = fetch_html(job_url)
+    if not html or error:
+        return []
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    locations = set()
+
+    # 🔑 Match any element with class containing "location"
+    location_elements = soup.select(
+        '[class*="location"], [class*="Location"], [class*="LOCATION"]'
+    )
+
+    for el in location_elements:
+        # Remove svg/icons inside location blocks
+        for svg in el.find_all("svg"):
+            svg.decompose()
+
+        text = el.get_text(separator=" ", strip=True)
+
+        # Normalize spaces
+        text = re.sub(r"\s+", " ", text)
+
+        # Skip empty / junk
+        if not text or len(text) < 2:
+            continue
+
+        locations.add(text.lower())
+
+    return list(locations)
+
