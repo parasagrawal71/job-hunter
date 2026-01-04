@@ -162,6 +162,7 @@ def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:
     log("✅ locations passed all checks", "DEBUG")
     return True, matched_locations
 
+
 def calculate_score(job, config):
     experience_score = 1 if job.get("yoe") else 0
     keyword_score = len(job["matched_keywords"]) / len(config["include_keywords"])

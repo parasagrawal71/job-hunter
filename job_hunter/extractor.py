@@ -46,18 +46,23 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
     return jobs
 
 
-def extract_job_details(job_url: str) -> dict:
+async def extract_job_details_and_locations(job_url: str, config) -> dict:
     log("🌐 Fetching job detail page...", "DEBUG")
     """
-    Step 2: Visit job detail page and extract full description
+    Step 2: Visit job detail page and extract:
+    - full description
+    - job locations
+
     Excludes footer-like sections generically.
     """
-    html, error = fetch_html(job_url)
+    html, error = await fetch_html(job_url)
     if not html or error:
         return {
             "description": "",
+            "locations": [],
             "error": error,
         }
+
     soup = BeautifulSoup(html, "html.parser")
 
     # Remove footer-like sections generically
@@ -68,40 +73,18 @@ def extract_job_details(job_url: str) -> dict:
     for el in soup.find_all("footer"):
         el.decompose()
 
+    # -------------------------
+    # Extract description
+    # -------------------------
     text = soup.get_text(separator=" ", strip=True)
-
     log(f"📝 Description length: {len(text)} chars", "DEBUG")
-    return {"description": text}
 
+    description = text.lower()
 
-def extract_job_locations(job_url: str, description: str, config) -> list[str]:
+    # -------------------------
+    # Extract locations
+    # -------------------------
     log("📍 Extracting job locations...", "DEBUG")
-    description = description.lower()
-
-    """
-    Extract job location(s) from job detail page.
-
-    Strategy:
-    - Find elements whose class contains 'location' (case-insensitive)
-    - Works for nested and non-nested structures
-    - Ignores SVG/icon text
-    - Normalizes whitespace
-    - Returns unique location strings
-    """
-
-    html, error = fetch_html(job_url)
-    if not html or error:
-        return []
-
-    soup = BeautifulSoup(html, "html.parser")
-
-    # Remove footer-like sections generically
-    for el in soup.select('[class*="footer"], [class*="Footer"], [class*="FOOTER"]'):
-        el.decompose()
-
-    # also remove semantic footer tags
-    for el in soup.find_all("footer"):
-        el.decompose()
 
     locations = set()
 
@@ -115,17 +98,15 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
         for svg in el.find_all("svg"):
             svg.decompose()
 
-        text = el.get_text(separator=" ", strip=True)
-
         # Normalize spaces
-        text = re.sub(r"\s+", " ", text)
+        loc_text = el.get_text(separator=" ", strip=True)
+        loc_text = re.sub(r"\s+", " ", loc_text)
 
         # Skip empty / junk
-        if not text or len(text) < 2:
+        if not loc_text or len(loc_text) < 2:
             continue
 
-        locs = text.split(",")
-        for loc in locs:
+        for loc in loc_text.split(","):
             locations.add(loc.strip().lower())
 
     normalized_locations = normalize_str_into_words(list(locations))
@@ -134,19 +115,24 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
         "DEBUG",
     )
 
+    # -------------------------
+    # Fallback: infer from description
+    # -------------------------
     if len(normalized_locations) == 0:
         LOCATION_ALIASES = {
             "bangalore": ["bangalore", "bengaluru", "blr"],
             "remote": ["remote", "work from home", "wfh", "anywhere"],
             "india": ["india"],
         }
+
         for loc in config["blocked_locations"]:
             LOCATION_ALIASES[loc] = [loc]
 
+        all_locations = list(config["allowed_locations"]) + list(
+            config["blocked_locations"]
+        )
+
         for canonical, aliases in LOCATION_ALIASES.items():
-            all_locations = [loc for loc in config["allowed_locations"]] + [
-                loc for loc in config["blocked_locations"]
-            ]
             if canonical not in all_locations:
                 continue
             if match_words(description, aliases):
@@ -157,7 +143,11 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
             "DEBUG",
         )
 
-    return normalized_locations
+    return {
+        "description": text,
+        "locations": normalized_locations,
+        "error": None,
+    }
 
 
 def extract_yoe_from_description(description: str):

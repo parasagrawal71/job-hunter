@@ -1,5 +1,7 @@
 import argparse
+import asyncio
 from job_hunter.pipeline import run_pipeline
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -7,23 +9,15 @@ def main():
     )
 
     parser.add_argument(
-        "--input",
-        required=True,
-        help="CSV file with company and career_url"
+        "--input", required=True, help="CSV file with company and career_url"
     )
 
-    parser.add_argument(
-        "--output",
-        default="jobs.csv",
-        help="Output CSV file"
-    )
+    parser.add_argument("--output", default="jobs.csv", help="Output CSV file")
 
     args = parser.parse_args()
 
-    run_pipeline(
-        input_file=args.input,
-        output_file=args.output
-    )
+    asyncio.run(run_pipeline(input_file=args.input, output_file=args.output))
+
 
 if __name__ == "__main__":
     main()

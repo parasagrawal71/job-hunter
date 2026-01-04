@@ -1,13 +1,13 @@
 import csv
 import time
 import re
+import asyncio
 
 from job_hunter.config import build_config
 from job_hunter.crawler import fetch_html
 from job_hunter.extractor import (
     extract_job_links,
-    extract_job_details,
-    extract_job_locations,
+    extract_job_details_and_locations,
     extract_yoe_from_description,
 )
 from job_hunter.matcher import (
@@ -29,8 +29,11 @@ error_file = "jobs_error.csv"
 companies_with_zero_links = []
 companies_with_zero_links_file = "companies_with_zero_links.csv"
 
+# 🔑 GLOBAL CONCURRENCY LIMIT
+JOB_SEMAPHORE = asyncio.Semaphore(10)
 
-def run_pipeline(input_file: str, output_file: str):
+
+async def run_pipeline(input_file: str, output_file: str):
     pattern = re.compile(r".*_test.*\.csv$")
     if bool(pattern.match(input_file)):
         log("Running in debug mode")
@@ -80,7 +83,7 @@ def run_pipeline(input_file: str, output_file: str):
                     log(f"⚠️ Skipping blocked company: {company}")
                     continue
 
-                listing_html, error = fetch_html(career_url)
+                listing_html, error = await fetch_html(career_url)
                 if error:
                     failed_companies.append({"company": company, "error": error})
                     companies_with_zero_links.append(
@@ -108,72 +111,70 @@ def run_pipeline(input_file: str, output_file: str):
                 job_links = extract_job_links(listing_html, career_url)
                 is_company_links_found = False
 
-                for idx, jl in enumerate(job_links, start=1):
-                    job_title = jl.get("title")
-                    job_url = jl.get("link")
+                log(f"⚙️ Processing {len(job_links)} job links in parallel", "DEBUG")
 
-                    log(f"\n➡️ Job [{idx}] Title: {job_title}", "DEBUG")
-                    log(f"🔗 Job URL: {job_url}", "DEBUG")
+                async def process_job(idx, jl):
+                    async with JOB_SEMAPHORE:
+                        job_title = jl.get("title")
+                        job_url = jl.get("link")
 
-                    # --- Run job detail URL matcher
-                    if not match_job_detail_url(job_url, config):
-                        log("⏭️ Skipped — not a probable job detail URL", "DEBUG")
-                        continue
+                        log(f"\n➡️ Job [{idx}] Title: {job_title}", "DEBUG")
+                        log(f"🔗 Job URL: {job_url}", "DEBUG")
 
-                    # --- dedupe by job link
-                    if job_url in existing_job_links:
-                        is_company_links_found = True
-                        log("⏭️ Skipped — job already exists in CSV", "DEBUG")
-                        continue
+                        # --- Run job detail URL matcher
+                        if not match_job_detail_url(job_url, config):
+                            log("⏭️ Skipped — not a probable job detail URL", "DEBUG")
+                            return None
 
-                    # --- Run title matcher
-                    if not match_title(job_title, config):
-                        log("⏭️ Skipped — title matching failed", "DEBUG")
-                        continue
+                        # --- dedupe by job link
+                        if job_url in existing_job_links:
+                            log("⏭️ Skipped — job already exists in CSV", "DEBUG")
+                            return "JOB_ALREADY_EXISTS"
 
-                    # --- Step 2: Extract job details
-                    details = extract_job_details(job_url)
-                    description = details.get("description", "")
+                        # --- Run title matcher
+                        if not match_title(job_title, config):
+                            log("⏭️ Skipped — title matching failed", "DEBUG")
+                            return None
 
-                    # --- Run description matcher
-                    is_desc_match, matched_keywords = match_description(
-                        description, config
-                    )
-                    if not is_desc_match:
-                        log("⏭️ Skipped — description matching failed", "DEBUG")
-                        continue
+                        # --- Step 2: Extract job description and job locations
+                        details = await extract_job_details_and_locations(
+                            job_url, config
+                        )
+                        description = details.get("description", "")
+                        extracted_locations = details.get("locations", [])
 
-                    # --- Step 3: Extract job locations
-                    extracted_locations = extract_job_locations(
-                        job_url, description, config
-                    )
+                        # --- Run description matcher
+                        is_desc_match, matched_keywords = match_description(
+                            description, config
+                        )
+                        if not is_desc_match:
+                            log("⏭️ Skipped — description matching failed", "DEBUG")
+                            return None
 
-                    # --- Run location matcher
-                    is_loc_match, _ = match_locations(extracted_locations, config)
-                    if not is_loc_match:
-                        log("⏭️ Skipped — location matching failed", "DEBUG")
-                        continue
+                        # --- Run location matcher
+                        is_loc_match, _ = match_locations(extracted_locations, config)
+                        if not is_loc_match:
+                            log("⏭️ Skipped — location matching failed", "DEBUG")
+                            return None
 
-                    # --- Step 4: Extract YOE
-                    yoe = extract_yoe_from_description(description)
+                        # --- Step 3: Extract YOE
+                        yoe = extract_yoe_from_description(description)
 
-                    job_data = {
-                        "title": job_title,
-                        "description": description,
-                        "yoe": yoe,
-                        "matched_keywords": matched_keywords,
-                    }
+                        job_data = {
+                            "title": job_title,
+                            "description": description,
+                            "yoe": yoe,
+                            "matched_keywords": matched_keywords,
+                        }
 
-                    score = calculate_score(job_data, config)
-                    log(f"📈 Match score: {score}%", "DEBUG")
+                        score = calculate_score(job_data, config)
+                        log(f"📈 Match score: {score}%", "DEBUG")
 
-                    if score == 0:
-                        log("⏭️ Skipped — score is 0", "DEBUG")
-                        continue
+                        if score == 0:
+                            log("⏭️ Skipped — score is 0", "DEBUG")
+                            return None
 
-                    writer.writerow(
-                        {
-                            JobCSVField.S_NO.value: serial_no,
+                        return {
                             JobCSVField.COMPANY.value: clean_string_value(company),
                             JobCSVField.JOB_TITLE.value: clean_string_value(job_title),
                             JobCSVField.JOB_LINK.value: clean_string_value(job_url),
@@ -189,10 +190,26 @@ def run_pipeline(input_file: str, output_file: str):
                                 ", ".join(extracted_locations)
                             ),
                         }
-                    )
 
+                tasks = [
+                    process_job(idx, jl) for idx, jl in enumerate(job_links, start=1)
+                ]
+
+                results = await asyncio.gather(*tasks)
+
+                for result in results:
+                    if result == "JOB_ALREADY_EXISTS":
+                        is_company_links_found = True
+                        continue
+
+                    if not result:
+                        continue
+
+                    result[JobCSVField.S_NO.value] = serial_no
+                    writer.writerow(result)
                     csvfile.flush()
-                    existing_job_links.add(job_url)
+
+                    existing_job_links.add(result[JobCSVField.JOB_LINK.value])
                     is_company_links_found = True
                     log("✅ Job written to CSV")
                     serial_no += 1
