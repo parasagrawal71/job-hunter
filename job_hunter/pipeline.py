@@ -31,7 +31,7 @@ companies_with_zero_links = []
 def run_pipeline(input_file: str, output_file: str):
     pattern = re.compile(r".*_test.*\.csv$")
     if bool(pattern.match(input_file)):
-        log("Running in test mode")
+        log("Running in debug mode")
         set_log_level("DEBUG")
 
     start_time = time.time()

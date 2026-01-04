@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from job_hunter.crawler import fetch_html
 from job_hunter.utils.log import log
-from job_hunter.utils.utils import normalize_str_into_words
+from job_hunter.utils.utils import normalize_str_into_words, match_words
 
 
 def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
@@ -60,11 +60,11 @@ def extract_job_details(job_url: str) -> dict:
         }
     soup = BeautifulSoup(html, "html.parser")
 
-    # 🔑 Remove footer-like sections generically
+    # Remove footer-like sections generically
     for el in soup.select('[class*="footer"], [class*="Footer"], [class*="FOOTER"]'):
         el.decompose()
 
-    # Optional: also remove semantic footer tags
+    # also remove semantic footer tags
     for el in soup.find_all("footer"):
         el.decompose()
 
@@ -94,6 +94,14 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
         return []
 
     soup = BeautifulSoup(html, "html.parser")
+
+    # Remove footer-like sections generically
+    for el in soup.select('[class*="footer"], [class*="Footer"], [class*="FOOTER"]'):
+        el.decompose()
+
+    # also remove semantic footer tags
+    for el in soup.find_all("footer"):
+        el.decompose()
 
     locations = set()
 
@@ -141,7 +149,7 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
             ]
             if canonical not in all_locations:
                 continue
-            if any(alias in description for alias in aliases):
+            if match_words(description, aliases):
                 normalized_locations.append(canonical)
 
         log(
