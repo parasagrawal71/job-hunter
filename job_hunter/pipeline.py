@@ -18,6 +18,7 @@ from job_hunter.matcher import (
     match_locations,
     calculate_score,
 )
+from job_hunter.exporter import export_companies_with_zero_links
 from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
 from job_hunter.constants import JobCSVField, ErrorCSVField
@@ -26,6 +27,7 @@ from job_hunter.helpers import sort_csv_in_place, load_existing_job_links
 failed_companies = []
 error_file = "jobs_error.csv"
 companies_with_zero_links = []
+companies_with_zero_links_file = "companies_with_zero_links.csv"
 
 
 def run_pipeline(input_file: str, output_file: str):
@@ -97,7 +99,9 @@ def run_pipeline(input_file: str, output_file: str):
 
                 if not listing_html:
                     log("⚠️ Empty career page HTML", "DEBUG")
-                    companies_with_zero_links.append({"company": company, "career_url": career_url})
+                    companies_with_zero_links.append(
+                        {"company": company, "career_url": career_url}
+                    )
                     continue
 
                 # --- Step 1: Extract job links
@@ -140,7 +144,9 @@ def run_pipeline(input_file: str, output_file: str):
                         continue
 
                     # --- Step 3: Extract job locations
-                    extracted_locations = extract_job_locations(job_url, description, config)
+                    extracted_locations = extract_job_locations(
+                        job_url, description, config
+                    )
 
                     # --- Run location matcher
                     is_loc_match, _ = match_locations(extracted_locations, config)
@@ -192,7 +198,9 @@ def run_pipeline(input_file: str, output_file: str):
                     serial_no += 1
 
                 if not is_company_links_found:
-                    companies_with_zero_links.append({"company": company, "career_url": career_url})
+                    companies_with_zero_links.append(
+                        {"company": company, "career_url": career_url}
+                    )
                     log(f"⚠️ Zero job links found for company {company}")
 
                 log(f"✅ Company {company} completed")
@@ -212,17 +220,23 @@ def run_pipeline(input_file: str, output_file: str):
     error_csv.close()
     log(f"📄 Company-level errors written to {error_file}")
 
-    print("\n\n")
-    log("🎉 Job Hunter finished")
-
     # Write companies with zero links
     print("\n\n")
     if companies_with_zero_links:
         log("🚨 Companies with zero job links:")
         for idx, entry in enumerate(companies_with_zero_links, start=1):
             log(f"{idx}. {entry['company']} — {entry['career_url']}")
+        export_companies_with_zero_links(
+            companies_with_zero_links, companies_with_zero_links_file
+        )
+        log(
+            f"📄 Companies with zero job links written to {companies_with_zero_links_file}"
+        )
     else:
         log("✅ No company with zero job links")
+
+    print("\n\n")
+    log("🎉 Job Hunter finished")
 
     # Log total run time
     end_time = time.time()

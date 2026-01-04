@@ -1,6 +1,7 @@
 venv
 # jobs.csv
 jobs_error.csv
+companies_with_zero_links.csv
 .DS_Store
 job_hunter.egg-info
 __pycache__/

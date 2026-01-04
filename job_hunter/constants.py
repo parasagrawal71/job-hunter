@@ -17,3 +17,8 @@ class ErrorCSVField(str, Enum):
     COMPANY = "Company"
     ERROR = "Error"
     CAREER_URL = "Career URL"
+
+class CompanyWithZeroLinksCSVField(str, Enum):
+    S_NO = "s_no"
+    COMPANY = "Company"
+    CAREER_URL = "Career URL"
