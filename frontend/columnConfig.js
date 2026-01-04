@@ -24,45 +24,45 @@ window.HeaderMap = {
 };
 
 window.COLUMN_CONFIG = {
-  s_no: {
+  [HeaderMap.S_NO]: {
     displayName: "#",
     columnWidth: "50px",
     columnAlign: "center",
   },
-  company: {
+  [HeaderMap.COMPANY]: {
     displayName: "Company",
     columnWidth: "100px",
   },
-  job_title: {
+  [HeaderMap.JOB_TITLE]: {
     displayName: "Title",
     columnWidth: "250px",
   },
-  yoe: {
+  [HeaderMap.YOE]: {
     displayName: "YoE",
     columnWidth: "50px",
     columnAlign: "center",
   },
-  match_percentage: {
+  [HeaderMap.MATCH_PERCENTAGE]: {
     displayName: "Match %",
     columnWidth: "90px",
     columnAlign: "right",
     hide: true, // HIDE COLUMN
   },
-  matched_keywords_count: {
+  [HeaderMap.MATCHED_KEYWORDS_COUNT]: {
     displayName: "Keywords #",
     columnWidth: "70px",
     columnAlign: "center",
     hide: true, // HIDE COLUMN
   },
-  matched_keywords: {
+  [HeaderMap.MATCHED_KEYWORDS]: {
     displayName: "Keywords",
     columnWidth: "120px",
   },
-  extracted_locations: {
+  [HeaderMap.EXTRACTED_LOCATIONS]: {
     displayName: "Locations",
     columnWidth: "100px",
   },
-  job_link: {
+  [HeaderMap.JOB_LINK]: {
     displayName: "Link",
     columnWidth: "50px",
     columnAlign: "center",
