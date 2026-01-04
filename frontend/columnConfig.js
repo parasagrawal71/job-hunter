@@ -11,6 +11,18 @@ window.DEFAULT_COLUMN_CONFIG = {
 /* =========================
    COLUMN CONFIG (OVERRIDES)
 ========================= */
+window.HeaderMap = {
+  S_NO: "s_no",
+  COMPANY: "company",
+  JOB_TITLE: "job_title",
+  YOE: "yoe",
+  MATCH_PERCENTAGE: "match_percentage",
+  MATCHED_KEYWORDS_COUNT: "matched_keywords_count",
+  MATCHED_KEYWORDS: "matched_keywords",
+  EXTRACTED_LOCATIONS: "extracted_locations",
+  JOB_LINK: "job_link",
+};
+
 window.COLUMN_CONFIG = {
   s_no: {
     displayName: "#",

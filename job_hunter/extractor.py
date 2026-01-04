@@ -116,10 +116,15 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
         if not text or len(text) < 2:
             continue
 
-        locations.add(text.lower())
+        locs = text.split(",")
+        for loc in locs:
+            locations.add(loc.strip().lower())
 
     normalized_locations = normalize_str_into_words(list(locations))
-    log(f"📍 Extracted locations from location_elements: {normalized_locations}", "DEBUG")
+    log(
+        f"📍 Extracted locations from location_elements: {normalized_locations}",
+        "DEBUG",
+    )
 
     if len(normalized_locations) == 0:
         LOCATION_ALIASES = {
@@ -127,14 +132,22 @@ def extract_job_locations(job_url: str, description: str, config) -> list[str]:
             "remote": ["remote", "work from home", "wfh", "anywhere"],
             "india": ["india"],
         }
+        for loc in config["blocked_locations"]:
+            LOCATION_ALIASES[loc] = [loc]
 
         for canonical, aliases in LOCATION_ALIASES.items():
-            if canonical not in config["allowed_locations"]:
+            all_locations = [loc for loc in config["allowed_locations"]] + [
+                loc for loc in config["blocked_locations"]
+            ]
+            if canonical not in all_locations:
                 continue
             if any(alias in description for alias in aliases):
                 normalized_locations.append(canonical)
 
-        log(f"📍 Extracted locations using (canonical, aliases) logic: {normalized_locations}", "DEBUG")
+        log(
+            f"📍 Extracted locations using (canonical, aliases) logic: {normalized_locations}",
+            "DEBUG",
+        )
 
     return normalized_locations
 

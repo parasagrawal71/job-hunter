@@ -133,7 +133,7 @@ function renderTable(rows) {
   tbody.innerHTML = "";
 
   const linkIdx = headers.findIndex((h) =>
-    h.toLowerCase().includes("job link"),
+    h.toLowerCase().includes(HeaderMap.JOB_LINK),
   );
 
   const visibleRows = rows.filter((cols) => {
@@ -162,8 +162,9 @@ function renderTable(rows) {
       const td = document.createElement("td");
       td.style.textAlign = cfg.columnAlign;
 
-      if (header.toLowerCase().includes("job link")) {
+      if (header.toLowerCase().includes(HeaderMap.JOB_LINK)) {
         const a = document.createElement("a");
+        console.log('------', cols[idx])
         a.href = cols[idx];
         a.target = "_blank";
         a.textContent = "Open";
@@ -272,7 +273,7 @@ document.getElementById("search").addEventListener("input", (e) => {
     h.toLowerCase().includes("company"),
   );
   const titleIdx = headers.findIndex((h) =>
-    h.toLowerCase().includes("job title"),
+    h.toLowerCase().includes(HeaderMap.JOB_TITLE),
   );
 
   const filtered = allRows.filter((cols) => {
