@@ -21,7 +21,7 @@ def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
 
         # 2️⃣ If anchor text is empty, try nested title-like elements
         if not title:
-            log(f"🔎 looking for nested title-like elements: {a}", "DEBUG")
+            # log(f"🔎 looking for nested title-like elements: {a}", "DEBUG")
             # Find any descendant whose class contains "title"
             title_candidate = a.select_one(
                 '[class*="title"], [class*="Title"], [class*="TITLE"]'

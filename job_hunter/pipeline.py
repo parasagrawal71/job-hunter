@@ -75,7 +75,7 @@ async def run_pipeline(input_file: str, output_file: str):
                 company = row["company"].strip()
                 career_url = row["career_url"].strip()
 
-                print("\n\n\n")
+                log("\n\n\n")
                 log(f"🏢 [{company_index}] Company: {company}")
                 log(f"🔗 Career URL: {career_url}")
 
@@ -223,11 +223,11 @@ async def run_pipeline(input_file: str, output_file: str):
                 log(f"✅ Company {company} completed")
 
     # 🔑 FINAL SORT BEFORE EXIT
-    print("\n\n")
+    log("\n\n")
     sort_csv_in_place(output_file)
 
     # Write company-level errors
-    print("\n\n")
+    log("\n\n")
     if failed_companies:
         log("🚨 Companies with crawl errors:")
         for idx, entry in enumerate(failed_companies, start=1):
@@ -238,7 +238,7 @@ async def run_pipeline(input_file: str, output_file: str):
     log(f"📄 Company-level errors written to {error_file}")
 
     # Write companies with zero links
-    print("\n\n")
+    log("\n\n")
     if companies_with_zero_links:
         log("🚨 Companies with zero job links:")
         for idx, entry in enumerate(companies_with_zero_links, start=1):
@@ -252,7 +252,7 @@ async def run_pipeline(input_file: str, output_file: str):
     else:
         log("✅ No company with zero job links")
 
-    print("\n\n")
+    log("\n\n")
     log("🎉 Job Hunter finished")
 
     # Log total run time
@@ -260,5 +260,5 @@ async def run_pipeline(input_file: str, output_file: str):
     total_seconds = int(end_time - start_time)
     minutes = total_seconds // 60
     seconds = total_seconds % 60
-    print("\n\n")
+    log("\n\n")
     log(f"⏱️ Total run time: {minutes}m {seconds}s")

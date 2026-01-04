@@ -3,6 +3,7 @@ from playwright.async_api import (
     TimeoutError as PlaywrightTimeoutError,
 )
 from playwright._impl._errors import Error as PlaywrightError
+from job_hunter.utils.log import log
 
 
 async def fetch_html(url: str):
@@ -66,8 +67,8 @@ async def fetch_html(url: str):
         except (PlaywrightTimeoutError, PlaywrightError) as e:
             error_msg = str(e).split("\n")[0]
 
-            print(f"⚠️ Playwright failed for URL: {url}")
-            print(f"⚠️ Reason: {error_msg}")
+            log(f"⚠️ Playwright failed for URL: {url}")
+            log(f"⚠️ Reason: {error_msg}")
 
             return None, error_msg
 

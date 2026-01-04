@@ -7,3 +7,4 @@ job_hunter.egg-info
 __pycache__/
 *.py[cod]
 *$py.class
+logs
