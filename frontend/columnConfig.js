@@ -12,45 +12,45 @@ window.DEFAULT_COLUMN_CONFIG = {
    COLUMN CONFIG (OVERRIDES)
 ========================= */
 window.COLUMN_CONFIG = {
-  "S.No": {
+  s_no: {
     displayName: "#",
     columnWidth: "50px",
     columnAlign: "center",
   },
-  Company: {
+  company: {
     displayName: "Company",
     columnWidth: "100px",
   },
-  "Job title": {
+  job_title: {
     displayName: "Title",
     columnWidth: "250px",
   },
-  YoE: {
+  yoe: {
     displayName: "YoE",
     columnWidth: "50px",
     columnAlign: "center",
   },
-  "Match percentage": {
+  match_percentage: {
     displayName: "Match %",
     columnWidth: "90px",
     columnAlign: "right",
     hide: true, // HIDE COLUMN
   },
-  "Matched Keywords count": {
+  matched_keywords_count: {
     displayName: "Keywords #",
     columnWidth: "70px",
     columnAlign: "center",
     hide: true, // HIDE COLUMN
   },
-  "Matched keywords": {
+  matched_keywords: {
     displayName: "Keywords",
     columnWidth: "120px",
   },
-  "Matched locations": {
-    displayName: "Location",
+  extracted_locations: {
+    displayName: "Locations",
     columnWidth: "100px",
   },
-  "Job link": {
+  job_link: {
     displayName: "Link",
     columnWidth: "50px",
     columnAlign: "center",

@@ -8,20 +8,19 @@ from job_hunter.extractor import (
     extract_job_links,
     extract_job_details,
     extract_yoe_from_description,
-    extract_matched_locations,
     extract_job_location,
 )
 from job_hunter.matcher import (
-    match_keywords,
-    validate_job,
     calculate_score,
-    title_matcher,
+    match_title,
+    match_job_detail_url,
+    match_description,
+    match_locations,
     is_company_blocked,
-    is_probable_job_detail_url,
-    extracted_locations_has_blocked_locations,
 )
 from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
+from job_hunter.constants import JobCSVField
 
 failed_companies = []
 
@@ -33,7 +32,7 @@ def load_existing_job_links(csv_path: str) -> set:
         with open(csv_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                link = row.get("Job link")
+                link = row.get(JobCSVField.JOB_LINK.value)
                 if link:
                     existing_links.add(link.strip())
     except FileNotFoundError:
@@ -52,8 +51,8 @@ def sort_csv_in_place(csv_path: str):
     # Sort by Company (ASC), Match % (DESC)
     rows.sort(
         key=lambda r: (
-            r["Company"].lower(),
-            -float(r["Match percentage"]),
+            r[JobCSVField.COMPANY.value].lower(),
+            -float(r[JobCSVField.MATCH_PERCENTAGE.value]),
         )
     )
 
@@ -63,7 +62,7 @@ def sort_csv_in_place(csv_path: str):
         writer.writeheader()
 
         for idx, row in enumerate(rows, start=1):
-            row["S.No"] = idx
+            row[JobCSVField.S_NO.value] = idx
             writer.writerow(row)
 
     log("✅ CSV sorted and rewritten")
@@ -98,17 +97,7 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
     with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(
             csvfile,
-            fieldnames=[
-                "S.No",
-                "Company",
-                "Job title",
-                "Job link",
-                "YoE",
-                "Match percentage",
-                "Matched Keywords count",
-                "Matched keywords",
-                "Matched locations",
-            ],
+            fieldnames=list(JobCSVField),
         )
 
         # 🔹 NEW: write header only if file is new
@@ -158,22 +147,19 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     log(f"\n➡️ Job [{idx}] Title: {job_title}", "DEBUG")
                     log(f"🔗 Job URL: {job_url}", "DEBUG")
 
-                    if not job_url:
-                        log("⏭️ Skipped — missing URL", "DEBUG")
+                    # --- Run job detail URL matcher
+                    if not match_job_detail_url(job_url, config):
+                        log("⏭️ Skipped — not a probable job detail URL", "DEBUG")
                         continue
 
-                    # 🔹 NEW: dedupe by job link
+                    # --- dedupe by job link
                     if job_url in existing_job_links:
                         log("⏭️ Skipped — job already exists in CSV", "DEBUG")
                         continue
 
                     # --- Run title matcher
-                    if not title_matcher(job_title, config):
+                    if not match_title(job_title, config):
                         log("⏭️ Skipped — title matching failed", "DEBUG")
-                        continue
-
-                    if not is_probable_job_detail_url(job_url):
-                        log("⏭️ Skipped — not a probable job detail URL", "DEBUG")
                         continue
 
                     log("🌐 Fetching job detail page...", "DEBUG")
@@ -181,39 +167,22 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     description = details.get("description", "")
                     log(f"📝 Description length: {len(description)} chars", "DEBUG")
 
-                    if not description:
-                        log("⏭️ Skipped — empty job description", "DEBUG")
+                    # --- Run description matcher
+                    is_desc_match, matched_keywords = match_description(
+                        description, config
+                    )
+                    if not is_desc_match:
+                        log("⏭️ Skipped — description matching failed", "DEBUG")
                         continue
 
                     log("📍 Extracting job locations...", "DEBUG")
                     extracted_locations = extract_job_location(job_url)
                     log(f"📍 Extracted locations: {extracted_locations}", "DEBUG")
 
-                    if extracted_locations_has_blocked_locations(
-                        extracted_locations, config["blocked_locations"]
-                    ):
-                        log(
-                            "⏭️ Skipped — extracted location matched blocked_locations",
-                            "DEBUG",
-                        )
+                    # --- Run location matcher
+                    if not match_locations(extracted_locations, config):
+                        log("⏭️ Skipped — location matching failed", "DEBUG")
                         continue
-
-                    matched_keywords = match_keywords(
-                        description, config["include_keywords"]
-                    )
-                    log(
-                        f"🔑 Keywords matched ({len(matched_keywords)}): {matched_keywords}",
-                        "DEBUG",
-                    )
-
-                    if not matched_keywords:
-                        log("⏭️ Skipped — no keywords matched", "DEBUG")
-                        continue
-
-                    matched_locations = extract_matched_locations(
-                        description, config["allowed_locations"]
-                    )
-                    log(f"📍 Matched locations: {matched_locations}", "DEBUG")
 
                     yoe = extract_yoe_from_description(description)
                     log(f"📊 Extracted YOE: {yoe}", "DEBUG")
@@ -225,12 +194,6 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                         "matched_keywords": matched_keywords,
                     }
 
-                    log("🧪 Running validation rules...", "DEBUG")
-                    is_ok, reason = validate_job(job_data, config)
-                    if not is_ok:
-                        log(f"❌ Validation failed — {reason}", "DEBUG")
-                        continue
-
                     score = calculate_score(job_data, config)
                     log(f"📈 Match score: {score}%", "DEBUG")
 
@@ -240,18 +203,20 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
 
                     writer.writerow(
                         {
-                            "S.No": serial_no,
-                            "Company": clean_string_value(company),
-                            "Job title": clean_string_value(job_title),
-                            "Job link": clean_string_value(job_url),
-                            "YoE": yoe if yoe is not None else "",
-                            "Match percentage": score,
-                            "Matched Keywords count": len(matched_keywords),
-                            "Matched keywords": clean_string_value(
+                            JobCSVField.S_NO.value: serial_no,
+                            JobCSVField.COMPANY.value: clean_string_value(company),
+                            JobCSVField.JOB_TITLE.value: clean_string_value(job_title),
+                            JobCSVField.JOB_LINK.value: clean_string_value(job_url),
+                            JobCSVField.YOE.value: yoe if yoe is not None else "",
+                            JobCSVField.MATCH_PERCENTAGE.value: score,
+                            JobCSVField.MATCHED_KEYWORDS_COUNT.value: len(
+                                matched_keywords
+                            ),
+                            JobCSVField.MATCHED_KEYWORDS.value: clean_string_value(
                                 ", ".join(matched_keywords)
                             ),
-                            "Matched locations": clean_string_value(
-                                ", ".join(matched_locations)
+                            JobCSVField.EXTRACTED_LOCATIONS.value: clean_string_value(
+                                ", ".join(extracted_locations)
                             ),
                         }
                     )
