@@ -5,7 +5,7 @@ from job_hunter.utils.utils import contains_whole_word, match_words
 
 
 def title_matches_include_groups(title, include_title_groups):
-    words = set(re.findall(r"\b\w+\b", title.lower()))
+    words = set(re.findall(r"\b\w+\b", title.lower()))  # no partial match
     for group in include_title_groups:
         if all(word in words for word in group):
             return True
