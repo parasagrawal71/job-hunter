@@ -52,6 +52,7 @@ async function loadJobs() {
   await loadAppliedJobs();
 
   const res = await fetch("../jobs.csv");
+  if (!res.ok) return;
   const text = await res.text();
 
   const lines = text.trim().split("\n");
