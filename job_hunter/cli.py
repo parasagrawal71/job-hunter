@@ -13,13 +13,6 @@ def main():
     )
 
     parser.add_argument(
-        "--min-yoe",
-        type=int,
-        default=6,
-        help="Minimum years of experience"
-    )
-
-    parser.add_argument(
         "--output",
         default="jobs.csv",
         help="Output CSV file"
@@ -29,7 +22,6 @@ def main():
 
     run_pipeline(
         input_file=args.input,
-        min_yoe=args.min_yoe,
         output_file=args.output
     )
 

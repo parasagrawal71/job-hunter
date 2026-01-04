@@ -1,21 +1,7 @@
 import re
 from typing import Tuple, List
 from job_hunter.utils.log import log
-from job_hunter.utils.utils import normalize_str_into_words, contains_whole_word, match_words
-
-
-def calculate_score(job, config):
-    experience_score = 1 if job.get("yoe") else 0
-    keyword_score = len(job["matched_keywords"]) / len(config["include_keywords"])
-
-    score = experience_score * 0.3 + keyword_score * 0.7
-
-    return round(score * 100, 2)
-
-
-def is_company_blocked(company, blocked_companies):
-    company = company.lower()
-    return company in blocked_companies
+from job_hunter.utils.utils import contains_whole_word, match_words
 
 
 def title_matches_include_groups(title, include_title_groups):
@@ -26,7 +12,7 @@ def title_matches_include_groups(title, include_title_groups):
     return False
 
 
-def match_title(title, config):
+def match_title(title, config) -> bool:
     log(f"🔎 matching title: {title}", "DEBUG")
     title = title.lower()
 
@@ -65,7 +51,7 @@ def match_title(title, config):
     return True
 
 
-def match_job_detail_url(url, config):
+def match_job_detail_url(url, config) -> bool:
     log(f"🔎 checking job detail URL: {url}", "DEBUG")
     url = url.lower()
 
@@ -147,7 +133,6 @@ def match_description(description, config) -> Tuple[bool, List[str]]:
 
 def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:
     log(f"🔎 matching locations", "DEBUG")
-    extracted_locations = normalize_str_into_words(extracted_locations)
     extracted_locations = [loc.lower() for loc in extracted_locations]
 
     if len(extracted_locations) == 0:
@@ -176,3 +161,16 @@ def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:
 
     log("✅ locations passed all checks", "DEBUG")
     return True, matched_locations
+
+def calculate_score(job, config):
+    experience_score = 1 if job.get("yoe") else 0
+    keyword_score = len(job["matched_keywords"]) / len(config["include_keywords"])
+
+    score = experience_score * 0.3 + keyword_score * 0.7
+
+    return round(score * 100, 2)
+
+
+def is_company_blocked(company, blocked_companies):
+    company = company.lower()
+    return company in blocked_companies

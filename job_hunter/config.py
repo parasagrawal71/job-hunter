@@ -1,4 +1,4 @@
-def build_config(min_yoe: int):
+def build_config():
     return {
         # -------------------------
         # Include keywords: Crawls job description for these keywords

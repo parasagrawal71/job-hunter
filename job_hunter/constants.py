@@ -11,3 +11,9 @@ class JobCSVField(str, Enum):
     MATCHED_KEYWORDS_COUNT = "matched_keywords_count"
     MATCHED_KEYWORDS = "matched_keywords"
     EXTRACTED_LOCATIONS = "extracted_locations"
+
+
+class ErrorCSVField(str, Enum):
+    COMPANY = "Company"
+    ERROR = "Error"
+    CAREER_URL = "Career URL"
