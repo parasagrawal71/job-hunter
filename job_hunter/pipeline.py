@@ -15,10 +15,7 @@ from job_hunter.matcher import (
     match_keywords,
     validate_job,
     calculate_score,
-    title_matches_include_groups,
-    title_has_exclude_title,
-    title_has_exclude_keywords,
-    title_has_blocked_locations,
+    title_matcher,
     is_company_blocked,
     is_probable_job_detail_url,
     extracted_locations_has_blocked_locations,
@@ -161,8 +158,8 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     log(f"\n➡️ Job [{idx}] Title: {job_title}", "DEBUG")
                     log(f"🔗 Job URL: {job_url}", "DEBUG")
 
-                    if not job_title or not job_url:
-                        log("⏭️ Skipped — missing title or URL", "DEBUG")
+                    if not job_url:
+                        log("⏭️ Skipped — missing URL", "DEBUG")
                         continue
 
                     # 🔹 NEW: dedupe by job link
@@ -170,22 +167,9 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                         log("⏭️ Skipped — job already exists in CSV", "DEBUG")
                         continue
 
-                    if not title_matches_include_groups(
-                        job_title, config["include_titles"]
-                    ):
-                        log("⏭️ Skipped — title failed include_titles", "DEBUG")
-                        continue
-
-                    if title_has_exclude_title(job_title, config["exclude_titles"]):
-                        log("⏭️ Skipped — title matched exclude_titles", "DEBUG")
-                        continue
-
-                    if title_has_exclude_keywords(job_title, config["exclude_keywords"]):
-                        log("⏭️ Skipped — title matched exclude_keywords", "DEBUG")
-                        continue
-
-                    if title_has_blocked_locations(job_title, config["blocked_locations"]):
-                        log("⏭️ Skipped — title matched blocked_locations", "DEBUG")
+                    # --- Run title matcher
+                    if not title_matcher(job_title, config):
+                        log("⏭️ Skipped — title matching failed", "DEBUG")
                         continue
 
                     if not is_probable_job_detail_url(job_url):
@@ -208,7 +192,10 @@ def run_pipeline(input_file: str, min_yoe: int, output_file: str):
                     if extracted_locations_has_blocked_locations(
                         extracted_locations, config["blocked_locations"]
                     ):
-                        log("⏭️ Skipped — extracted location matched blocked_locations", "DEBUG")
+                        log(
+                            "⏭️ Skipped — extracted location matched blocked_locations",
+                            "DEBUG",
+                        )
                         continue
 
                     matched_keywords = match_keywords(

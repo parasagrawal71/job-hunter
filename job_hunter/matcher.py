@@ -22,10 +22,7 @@ def validate_job(job, config):
 
     # ❌ Blocked locations (log exact match)
     for loc in config.get("blocked_locations", []):
-        # title contains blocked location
-        if contains_whole_word(title, loc):
-            return False, f"blocked location detected in title: '{loc}'"
-
+        pass
         # # description contains blocked location
         # if contains_whole_word(desc, loc):
         #     return False, f"blocked location detected in description: '{loc}'"
@@ -56,40 +53,6 @@ def calculate_score(job, config):
     score = experience_score * 0.3 + keyword_score * 0.7
 
     return round(score * 100, 2)
-
-
-def title_matches_include_groups(title, include_title_groups):
-    title = title.lower()
-    for group in include_title_groups:
-        if all(word in title for word in group):
-            return True
-    return False
-
-
-def title_has_exclude_title(title, exclude_titles):
-    title = title.lower()
-    for exclude_title in exclude_titles:
-        if contains_whole_word(title, exclude_title):
-            log(f"excluded title found in title: '{exclude_title}'", "DEBUG")
-            return False
-    return True
-
-
-def title_has_exclude_keywords(title, exclude_keywords):
-    title = title.lower()
-    for keyword in exclude_keywords:
-        if contains_whole_word(title, keyword):
-            log(f"excluded keyword found in title: '{keyword}'", "DEBUG")
-            return False
-    return True, ""
-
-def title_has_blocked_locations(title, blocked_locations):
-    title = title.lower()
-    for loc in blocked_locations:
-        if contains_whole_word(title, loc):
-            log(f"blocked location found in title: '{loc}'", "DEBUG")
-            return False
-    return True
 
 
 def is_company_blocked(company, blocked_companies):
@@ -149,3 +112,50 @@ def extracted_locations_has_blocked_locations(extracted_locations, blocked_locat
             log(f"blocked location found in extracted locations: '{loc}'", "DEBUG")
             return True
     return False
+
+
+def title_matches_include_groups(title, include_title_groups):
+    words = set(re.findall(r"\b\w+\b", title.lower()))
+    for group in include_title_groups:
+        if all(word in words for word in group):
+            return True
+    return False
+
+
+def title_matcher(title, config):
+    log(f"🔎 matching title: {title}", "DEBUG")
+    title = title.lower()
+
+    if not title:
+        log(f"🚨 title is empty", "DEBUG")
+        return False
+
+    # Exclusion: title contains exclude_titles
+    exclude_titles = config["exclude_titles"]
+    for exclude_title in exclude_titles:
+        if contains_whole_word(title, exclude_title):
+            log(f"🚨 excluded title found in title: '{exclude_title}'", "DEBUG")
+            return False
+
+    # Exclusion: title contains blocked_locations
+    blocked_locations = config["blocked_locations"]
+    for loc in blocked_locations:
+        if contains_whole_word(title, loc):
+            log(f"🚨 blocked location found in title: '{loc}'", "DEBUG")
+            return False
+
+    # Exclusion: title contains exclude_keywords
+    exclude_keywords = config["exclude_keywords"]
+    for keyword in exclude_keywords:
+        if contains_whole_word(title, keyword):
+            log(f"🚨 excluded keyword found in title: '{keyword}'", "DEBUG")
+            return False
+
+    # Inclusion: title contains include_titles
+    include_title_groups = config["include_titles"]
+    if not title_matches_include_groups(title, include_title_groups):
+        log("🚨 title failed include_titles check", "DEBUG")
+        return False
+
+    log("✅ title passed all checks", "DEBUG")
+    return True
