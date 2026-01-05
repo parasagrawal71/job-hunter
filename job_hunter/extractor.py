@@ -120,16 +120,37 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
     # -------------------------
     if len(normalized_locations) == 0:
         LOCATION_ALIASES = {
+            # allowed locations
             "bangalore": ["bangalore", "bengaluru", "blr"],
             "remote": ["remote", "work from home", "wfh", "anywhere"],
             "india": ["india"],
+            # other locations
+            "hyderabad": ["hyderabad", "hyd"],
+            "pune": ["pune", "poona"],
+            "chennai": ["chennai", "madras"],
+            "gurgaon": ["gurgaon", "gurugram", "ggn"],
+            "noida": ["noida"],
+            "delhi": ["delhi", "new delhi", "ncr", "delhi ncr"],
+            "mumbai": ["mumbai", "bombay"],
+            "ahmedabad": ["ahmedabad", "amdavad"],
+            "indore": ["indore"],
+            "jaipur": ["jaipur"],
+            "kochi": ["kochi", "cochin"],
+            "trivandrum": ["trivandrum", "thiruvananthapuram"],
+            "coimbatore": ["coimbatore", "kovai"],
+            "trichy": ["trichy", "tiruchirappalli"],
+            "bhubaneswar": ["bhubaneswar", "bbsr"],
+            "kolkata": ["kolkata", "calcutta"],
         }
 
         for loc in config["blocked_locations"]:
             LOCATION_ALIASES[loc] = [loc]
 
-        all_locations = list(config["allowed_locations"]) + list(
-            config["blocked_locations"]
+        all_locations = (
+            list(config["allowed_locations"])
+            + list(config["blocked_locations"])
+            + list(config["other_locations"])
+            + list(LOCATION_ALIASES.keys())
         )
 
         for canonical, aliases in LOCATION_ALIASES.items():

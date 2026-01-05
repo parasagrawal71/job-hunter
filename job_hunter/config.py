@@ -3,7 +3,7 @@ import pycountry
 OTHER_COUNTRIES = list(
     {c.name.lower() for c in pycountry.countries if c.name.lower() != "india"}
 )
-ALIASES = list({"usa", "u.s.", "eu", "uk", "uae"})
+OTHER_COUNTRIES_ALIASES = list({"usa", "u.s.", "eu", "uk", "uae"})
 
 
 def build_config():
@@ -141,7 +141,31 @@ def build_config():
         # -------------------------
         # Blocked locations: If any of these locations are found in job description, skip the job
         # -------------------------
-        "blocked_locations": OTHER_COUNTRIES + ALIASES + [],
+        "blocked_locations": OTHER_COUNTRIES + OTHER_COUNTRIES_ALIASES + [],
+        #
+        #
+        # -------------------------
+        # Other locations
+        # -------------------------
+        "other_locations": [
+            "bangalore",
+            "hyderabad",
+            "pune",
+            "chennai",
+            "gurgaon",
+            "noida",
+            "delhi",
+            "mumbai",
+            "ahmedabad",
+            "indore",
+            "jaipur",
+            "kochi",
+            "trivandrum",
+            "coimbatore",
+            "trichy",
+            "bhubaneswar",
+            "kolkata",
+        ],
         #
         #
         # -------------------------
