@@ -107,14 +107,14 @@ def match_description(description, config) -> Tuple[bool, List[str], List[str]]:
 
     if not description:
         log(f"🚨 description is empty", "DEBUG")
-        return False, []
+        return False, [], []
 
     # Exclusion: description contains exclude_keywords
     exclude_keywords = config["exclude_keywords"]
     # for keyword in exclude_keywords:
     #     if contains_whole_word(description, keyword):
     #         log(f"🚨 excluded keyword found in description: '{keyword}'", "DEBUG")
-    #         return False, []
+    #         return False, [], []
 
     # Inclusion: description contains include_keywords
     include_keywords = config["include_keywords"]
@@ -125,7 +125,7 @@ def match_description(description, config) -> Tuple[bool, List[str], List[str]]:
     )
     if len(matched_keywords) == 0:
         log("🚨 description has no include_keywords", "DEBUG")
-        return False, []
+        return False, [], []
 
     all_keywords = exclude_keywords + include_keywords + config["other_keywords"]
     extracted_keywords = match_words(description, all_keywords)

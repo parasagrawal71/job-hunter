@@ -2,6 +2,8 @@ let allRows = [];
 let headers = [];
 let openMenu = null;
 
+const JOB_LIST_FILE_PATH = "../jobs.csv";
+
 /* =========================
    APPLIED JOBS STATE
 ========================= */
@@ -51,7 +53,7 @@ function getColumnConfig(header) {
 async function loadJobs() {
   await loadAppliedJobs();
 
-  const res = await fetch("../jobs.csv");
+  const res = await fetch(JOB_LIST_FILE_PATH);
   if (!res.ok) return;
   const text = await res.text();
 
