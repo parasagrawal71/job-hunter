@@ -192,6 +192,11 @@ function renderTable(rows) {
     `;
     menuBtn.className = "kebab-menu";
     menuBtn.style.cursor = "pointer";
+    menuBtn.style.display = window.location.origin.includes(
+      "https://parasagrawal71.github.io",
+    )
+      ? "default"
+      : "none";
 
     const menu = document.createElement("div");
     menu.style.position = "absolute";
