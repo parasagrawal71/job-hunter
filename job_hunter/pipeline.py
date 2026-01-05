@@ -21,7 +21,11 @@ from job_hunter.matcher import (
 from job_hunter.exporter import export_companies_with_zero_links
 from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
-from job_hunter.constants import JobCSVField, ErrorCSVField
+from job_hunter.constants import (
+    JobCSVField,
+    ErrorCSVField,
+    CompanyWithZeroLinksCSVField,
+)
 from job_hunter.helpers import sort_csv_in_place, load_existing_job_links
 
 failed_companies = []
@@ -50,12 +54,23 @@ async def run_pipeline(input_file: str, output_file: str):
     serial_no = len(existing_job_links) + 1
     csv_exists = bool(existing_job_links)
 
+    # open error file
     error_csv = open(error_file, "w", newline="", encoding="utf-8")
     error_writer = csv.DictWriter(
         error_csv,
         fieldnames=list(ErrorCSVField),
     )
     error_writer.writeheader()
+
+    # open companies_with_zero_links file
+    zero_links_csv = open(
+        companies_with_zero_links_file, "w", newline="", encoding="utf-8"
+    )
+    zero_links_csv_writer = csv.DictWriter(
+        zero_links_csv,
+        fieldnames=list(CompanyWithZeroLinksCSVField),
+    )
+    zero_links_csv_writer.writeheader()
 
     # open in append mode instead of write
     with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
@@ -86,9 +101,6 @@ async def run_pipeline(input_file: str, output_file: str):
                 listing_html, error = await fetch_html(career_url)
                 if error:
                     failed_companies.append({"company": company, "error": error})
-                    companies_with_zero_links.append(
-                        {"company": company, "career_url": career_url}
-                    )
                     log(f"⚠️ Failed to crawl company — {error}")
                     error_writer.writerow(
                         {
@@ -98,6 +110,20 @@ async def run_pipeline(input_file: str, output_file: str):
                         }
                     )
                     error_csv.flush()
+
+                    companies_with_zero_links.append(
+                        {"company": company, "career_url": career_url}
+                    )
+                    zero_links_csv_writer.writerow(
+                        {
+                            CompanyWithZeroLinksCSVField.S_NO.value: len(
+                                companies_with_zero_links
+                            ),
+                            CompanyWithZeroLinksCSVField.COMPANY.value: company,
+                            CompanyWithZeroLinksCSVField.CAREER_URL.value: career_url,
+                        }
+                    )
+                    zero_links_csv.flush()
                     continue
 
                 if not listing_html:
@@ -105,6 +131,16 @@ async def run_pipeline(input_file: str, output_file: str):
                     companies_with_zero_links.append(
                         {"company": company, "career_url": career_url}
                     )
+                    zero_links_csv_writer.writerow(
+                        {
+                            CompanyWithZeroLinksCSVField.S_NO.value: len(
+                                companies_with_zero_links
+                            ),
+                            CompanyWithZeroLinksCSVField.COMPANY.value: company,
+                            CompanyWithZeroLinksCSVField.CAREER_URL.value: career_url,
+                        }
+                    )
+                    zero_links_csv.flush()
                     continue
 
                 # --- Step 1: Extract job links
@@ -218,6 +254,16 @@ async def run_pipeline(input_file: str, output_file: str):
                     companies_with_zero_links.append(
                         {"company": company, "career_url": career_url}
                     )
+                    zero_links_csv_writer.writerow(
+                        {
+                            CompanyWithZeroLinksCSVField.S_NO.value: len(
+                                companies_with_zero_links
+                            ),
+                            CompanyWithZeroLinksCSVField.COMPANY.value: company,
+                            CompanyWithZeroLinksCSVField.CAREER_URL.value: career_url,
+                        }
+                    )
+                    zero_links_csv.flush()
                     log(f"⚠️ Zero job links found for company {company}")
 
                 log(f"✅ Company {company} completed")
@@ -243,14 +289,10 @@ async def run_pipeline(input_file: str, output_file: str):
         log("🚨 Companies with zero job links:")
         for idx, entry in enumerate(companies_with_zero_links, start=1):
             log(f"{idx}. {entry['company']} — {entry['career_url']}")
-        export_companies_with_zero_links(
-            companies_with_zero_links, companies_with_zero_links_file
-        )
-        log(
-            f"📄 Companies with zero job links written to {companies_with_zero_links_file}"
-        )
     else:
         log("✅ No company with zero job links")
+    zero_links_csv.close()
+    log(f"📄 Companies with zero job links written to {companies_with_zero_links_file}")
 
     log("\n\n")
     log("🎉 Job Hunter finished")
