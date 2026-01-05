@@ -1,5 +1,6 @@
 venv
 # jobs.csv
+jobs_test.csv
 jobs_error.csv
 companies_with_zero_links.csv
 .DS_Store
