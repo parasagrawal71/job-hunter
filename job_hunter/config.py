@@ -1,3 +1,11 @@
+import pycountry
+
+OTHER_COUNTRIES = list(
+    {c.name.lower() for c in pycountry.countries if c.name.lower() != "india"}
+)
+ALIASES = list({"usa", "u.s.", "eu", "uk", "uae"})
+
+
 def build_config():
     return {
         # -------------------------
@@ -38,7 +46,16 @@ def build_config():
         # -------------------------
         # Exclude keywords: If any of these keywords are found in job description, skip the job
         # -------------------------
-        "exclude_keywords": ["java", "spring boot", "c++", "c", "c#", "react native"],
+        "exclude_keywords": [
+            "java",
+            "spring boot",
+            "c++",
+            "c",
+            "c#",
+            "react native",
+            "php",
+            ".net",
+        ],
         #
         #
         # -------------------------
@@ -111,6 +128,7 @@ def build_config():
             "android",
             "ios",
             "analyst",
+            "mlp",  # Machine Learning Platform Engineer
         ],
         #
         #
@@ -123,77 +141,7 @@ def build_config():
         # -------------------------
         # Blocked locations: If any of these locations are found in job description, skip the job
         # -------------------------
-        "blocked_locations": [
-            # ---- North America
-            "canada",
-            "united states",
-            "usa",
-            "u.s.",
-            "north america",
-            # ---- Europe (general)
-            "europe",
-            "eu",
-            "emea",
-            # ---- Europe (countries)
-            "poland",
-            "germany",
-            "france",
-            "uk",
-            "united kingdom",
-            "england",
-            "scotland",
-            "ireland",
-            "netherlands",
-            "belgium",
-            "sweden",
-            "norway",
-            "finland",
-            "denmark",
-            "switzerland",
-            "austria",
-            "spain",
-            "portugal",
-            "italy",
-            "czech",
-            "czech republic",
-            "slovakia",
-            "hungary",
-            "romania",
-            "bulgaria",
-            "croatia",
-            "slovenia",
-            "latvia",
-            "lithuania",
-            "estonia",
-            # ---- APAC (non-India)
-            "australia",
-            "new zealand",
-            "singapore",
-            "japan",
-            "south korea",
-            "korea",
-            "china",
-            "hong kong",
-            "taiwan",
-            # ---- Middle East
-            "uae",
-            "united arab emirates",
-            "dubai",
-            "qatar",
-            "saudi arabia",
-            # ---- Americas (other)
-            "mexico",
-            "brazil",
-            "argentina",
-            "chile",
-            "colombia",
-            # ---- Africa
-            "south africa",
-            "nigeria",
-            "kenya",
-            # ---- Others
-            "turkey",
-        ],
+        "blocked_locations": OTHER_COUNTRIES + ALIASES + [],
         #
         #
         # -------------------------
