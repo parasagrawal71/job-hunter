@@ -42,6 +42,12 @@ def build_config():
         #
         #
         # -------------------------
+        # Other keywords
+        # -------------------------
+        "other_keywords": ["terraform", "kubernetes"],
+        #
+        #
+        # -------------------------
         # Include titles: Matches job title with the words list in any order
         # -------------------------
         "include_titles": [

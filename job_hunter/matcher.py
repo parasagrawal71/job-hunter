@@ -127,7 +127,7 @@ def match_description(description, config) -> Tuple[bool, List[str], List[str]]:
         log("🚨 description has no include_keywords", "DEBUG")
         return False, []
 
-    all_keywords = exclude_keywords + include_keywords
+    all_keywords = exclude_keywords + include_keywords + config["other_keywords"]
     extracted_keywords = match_words(description, all_keywords)
 
     log("✅ description passed all checks", "DEBUG")
