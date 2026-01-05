@@ -15,63 +15,71 @@ async def fetch_html(url: str):
       error: str | None
     NEVER throws.
     """
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(
-            bypass_csp=True,
-            ignore_https_errors=True,
-        )
-        page = await context.new_page()
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                bypass_csp=True,
+                ignore_https_errors=True,
+            )
+            page = await context.new_page()
 
-        await page.route(
-            "**/*",
-            lambda route: route.continue_(
-                headers={
-                    **route.request.headers,
-                    "Cache-Control": "no-cache",
-                    "Pragma": "no-cache",
-                }
-            ),
-        )
-
-        page.set_default_navigation_timeout(60000)
-        page.set_default_timeout(60000)
-
-        try:
-            await page.goto(
-                url,
-                wait_until="domcontentloaded",
-                timeout=60000,
+            await page.route(
+                "**/*",
+                lambda route: route.continue_(
+                    headers={
+                        **route.request.headers,
+                        "Cache-Control": "no-cache",
+                        "Pragma": "no-cache",
+                    }
+                ),
             )
 
-            # 🔑 Try waiting for known job-card selectors (best effort)
-            JOB_SELECTORS = [
-                "a.apply-card",  # Zeta
-                "[data-testid='job']",  # some ATS
-                "a[href*='job']",  # generic fallback
-                "a[href*='careers']",
-            ]
+            page.set_default_navigation_timeout(60000)
+            page.set_default_timeout(60000)
 
-            for selector in JOB_SELECTORS:
-                try:
-                    await page.wait_for_selector(selector, timeout=8000)
-                    break
-                except Exception:
-                    pass
+            try:
+                await page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
 
-            await page.wait_for_timeout(2000)
-            html = await page.content()
+                # 🔑 Try waiting for known job-card selectors (best effort)
+                JOB_SELECTORS = [
+                    "a.apply-card",  # Zeta
+                    "[data-testid='job']",  # some ATS
+                    "a[href*='job']",  # generic fallback
+                    "a[href*='careers']",
+                ]
 
-            return html, None
+                for selector in JOB_SELECTORS:
+                    try:
+                        await page.wait_for_selector(selector, timeout=8000)
+                        break
+                    except Exception:
+                        pass
 
-        except (PlaywrightTimeoutError, PlaywrightError) as e:
-            error_msg = str(e).split("\n")[0]
+                await page.wait_for_timeout(2000)
+                html = await page.content()
 
-            log(f"⚠️ Playwright failed for URL: {url}")
-            log(f"⚠️ Reason: {error_msg}")
+                return html, None
 
-            return None, error_msg
+            except (PlaywrightTimeoutError, PlaywrightError) as e:
+                error_msg = str(e).split("\n")[0]
 
-        finally:
-            await context.close()
-            await browser.close()
+                log(f"⚠️ Playwright failed for URL: {url}")
+                log(f"⚠️ Reason: {error_msg}")
+
+                return None, error_msg
+
+            finally:
+                await context.close()
+                await browser.close()
+
+    except Exception as e:
+        # 🔑 Catches browser launch failures, Playwright startup issues, OS errors, etc.
+        error_msg = str(e).split("\n")[0]
+        log(f"⚠️ Playwright failed for URL: {url}")
+        log(f"⚠️ Reason: {error_msg}")
+        return None, error_msg
