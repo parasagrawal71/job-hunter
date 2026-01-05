@@ -179,7 +179,9 @@ async def run_pipeline(input_file: str, output_file: str):
                             job_url, config
                         )
                         description = details.get("description", "")
-                        extracted_locations = details.get("locations", [])
+                        all_extracted_locations = details.get(
+                            "all_extracted_locations", []
+                        )
 
                         # --- Run description matcher
                         is_desc_match, matched_keywords, extracted_keywords = (
@@ -190,7 +192,7 @@ async def run_pipeline(input_file: str, output_file: str):
                             return None
 
                         # --- Run location matcher
-                        is_loc_match, _ = match_locations(extracted_locations, config)
+                        is_loc_match, _ = match_locations(details, config)
                         if not is_loc_match:
                             log("⏭️ Skipped — location matching failed", "DEBUG")
                             return None
@@ -223,7 +225,7 @@ async def run_pipeline(input_file: str, output_file: str):
                                 ", ".join(extracted_keywords)
                             ),
                             JobCSVField.EXTRACTED_LOCATIONS.value: clean_string_value(
-                                ", ".join(extracted_locations)
+                                ", ".join(all_extracted_locations)
                             ),
                         }
 

@@ -59,7 +59,9 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
     if not html or error:
         return {
             "description": "",
-            "locations": [],
+            "extracted_locations": [],
+            "locations_from_description": [],
+            "all_extracted_locations": [],
             "error": error,
         }
 
@@ -86,7 +88,7 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
     # -------------------------
     log("📍 Extracting job locations...", "DEBUG")
 
-    locations = set()
+    extracted_locations = set()
 
     # 🔑 Match any element with class containing "location"
     location_elements = soup.select(
@@ -107,18 +109,20 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
             continue
 
         for loc in loc_text.split(","):
-            locations.add(loc.strip().lower())
+            extracted_locations.add(loc.strip().lower())
 
-    normalized_locations = normalize_str_into_words(list(locations))
+    normalized_extracted_locations = normalize_str_into_words(list(extracted_locations))
     log(
-        f"📍 Extracted locations from location_elements: {normalized_locations}",
+        f"📍 Extracted locations from location_elements: {normalized_extracted_locations}",
         "DEBUG",
     )
 
     # -------------------------
     # Fallback: infer from description
     # -------------------------
-    if len(normalized_locations) == 0:
+    normalized_locations_from_description = []
+    if len(normalized_extracted_locations) == 0:
+        locations_from_description = set()
         LOCATION_ALIASES = {
             # allowed locations
             "bangalore": ["bangalore", "bengaluru", "blr"],
@@ -157,16 +161,23 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
             if canonical not in all_locations:
                 continue
             if match_words(description, aliases):
-                normalized_locations.append(canonical)
+                locations_from_description.add(canonical)
 
+        normalized_locations_from_description = normalize_str_into_words(
+            list(locations_from_description)
+        )
         log(
-            f"📍 Extracted locations using (canonical, aliases) logic: {normalized_locations}",
+            f"📍 Extracted locations using (canonical, aliases) logic: {normalized_locations_from_description}",
             "DEBUG",
         )
 
     return {
         "description": text,
-        "locations": normalized_locations,
+        "extracted_locations": normalized_extracted_locations,
+        "locations_from_description": normalized_locations_from_description,
+        "all_extracted_locations": list(
+            set(normalized_extracted_locations + normalized_locations_from_description)
+        ),
         "error": None,
     }
 

@@ -60,7 +60,10 @@ async def fetch_html(url: str):
                     except Exception:
                         pass
 
-                await page.wait_for_timeout(2000)
+                # expand "Show more"
+                await _expand_dynamic_listings(page)
+
+                await page.wait_for_timeout(1000)
                 html = await page.content()
 
                 return html, None
@@ -83,3 +86,83 @@ async def fetch_html(url: str):
         log(f"⚠️ Playwright failed for URL: {url}")
         log(f"⚠️ Reason: {error_msg}")
         return None, error_msg
+
+async def _expand_dynamic_listings(page):
+    KEYWORDS = ["show more", "load more", "more jobs"]
+    prev_anchor_count = 0
+    max_clicks = 25
+
+    for _ in range(max_clicks):
+        button = await _find_element_by_text(page, KEYWORDS)
+
+        if not button:
+            log("⚠️ No Show more button found", "DEBUG")
+            break
+
+        log(f"🔑 Found Show more button: {button}", "DEBUG")
+
+        try:
+            await button.scroll_into_view_if_needed()
+            await button.click()
+        except Exception:
+            break
+
+        try:
+            await page.wait_for_function(
+                f"document.querySelectorAll('a').length > {prev_anchor_count}",
+                timeout=3000,
+            )
+        except Exception:
+            break
+
+        prev_anchor_count = await page.evaluate(
+            "document.querySelectorAll('a').length"
+        )
+
+
+async def _find_element_by_text(page, keywords):
+    """
+    Finds the most specific visible clickable element
+    whose text contains pagination keywords.
+    """
+    script = """
+    (keywords) => {
+        const candidates = Array.from(
+            document.querySelectorAll('button, a, div, span')
+        );
+
+        const matches = candidates.filter(el => {
+            if (!el.offsetParent) return false; // not visible
+
+            const text = (el.innerText || "").toLowerCase();
+            if (!keywords.some(k => text.includes(k))) return false;
+
+            // Must look clickable
+            const style = window.getComputedStyle(el);
+            const clickable =
+                el.tagName === 'BUTTON' ||
+                el.tagName === 'A' ||
+                el.getAttribute('role') === 'button' ||
+                typeof el.onclick === 'function' ||
+                style.cursor === 'pointer';
+
+            if (!clickable) return false;
+
+            // Reject very large containers (like #__next)
+            const childCount = el.querySelectorAll('*').length;
+            if (childCount > 10) return false;
+
+            return true;
+        });
+
+        // Prefer the smallest (most specific) element
+        matches.sort(
+            (a, b) =>
+                a.querySelectorAll('*').length -
+                b.querySelectorAll('*').length
+        );
+
+        return matches[0] || null;
+    }
+    """
+    return await page.evaluate_handle(script, keywords)

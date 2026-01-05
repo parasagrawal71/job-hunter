@@ -134,11 +134,15 @@ def match_description(description, config) -> Tuple[bool, List[str], List[str]]:
     return True, matched_keywords, extracted_keywords
 
 
-def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:
+def match_locations(job_details, config) -> Tuple[bool, List[str]]:
     log(f"🔎 matching locations", "DEBUG")
-    extracted_locations = [loc.lower() for loc in extracted_locations]
+    extracted_locations = job_details.get("extracted_locations", [])
+    all_extracted_locations = job_details.get("all_extracted_locations", [])
 
-    if len(extracted_locations) == 0:
+    extracted_locations = [loc.lower() for loc in extracted_locations]
+    all_extracted_locations = [loc.lower() for loc in all_extracted_locations]
+
+    if len(all_extracted_locations) == 0:
         log("🚨 no extracted locations", "DEBUG")
         return False, []
 
@@ -154,10 +158,10 @@ def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:
 
     # Inclusion: extracted_locations contains allowed_locations
     allowed_locations = config["allowed_locations"]
-    matched_locations = [loc for loc in allowed_locations if loc in extracted_locations]
+    matched_locations = [loc for loc in allowed_locations if loc in all_extracted_locations]
     if len(matched_locations) == 0:
         log(
-            f"🚨 no allowed locations found in extracted locations: '{extracted_locations}' (expected one of {allowed_locations})",
+            f"🚨 no allowed locations found in extracted locations: '{all_extracted_locations}' (expected one of {allowed_locations})",
             "DEBUG",
         )
         return False, []
