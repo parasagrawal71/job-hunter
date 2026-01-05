@@ -101,7 +101,7 @@ def match_job_detail_url(url, config) -> bool:
     return True
 
 
-def match_description(description, config) -> Tuple[bool, List[str]]:
+def match_description(description, config) -> Tuple[bool, List[str], List[str]]:
     log(f"🔎 matching description", "DEBUG")
     description = description.lower()
 
@@ -109,8 +109,8 @@ def match_description(description, config) -> Tuple[bool, List[str]]:
         log(f"🚨 description is empty", "DEBUG")
         return False, []
 
-    # # Exclusion: description contains exclude_keywords
-    # exclude_keywords = config["exclude_keywords"]
+    # Exclusion: description contains exclude_keywords
+    exclude_keywords = config["exclude_keywords"]
     # for keyword in exclude_keywords:
     #     if contains_whole_word(description, keyword):
     #         log(f"🚨 excluded keyword found in description: '{keyword}'", "DEBUG")
@@ -127,8 +127,11 @@ def match_description(description, config) -> Tuple[bool, List[str]]:
         log("🚨 description has no include_keywords", "DEBUG")
         return False, []
 
+    all_keywords = exclude_keywords + include_keywords
+    extracted_keywords = match_words(description, all_keywords)
+
     log("✅ description passed all checks", "DEBUG")
-    return True, matched_keywords
+    return True, matched_keywords, extracted_keywords
 
 
 def match_locations(extracted_locations, config) -> Tuple[bool, List[str]]:

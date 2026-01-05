@@ -8,7 +8,7 @@ class Job:
     title: str
     link: str
     yoe: int | None
-    matched_keywords: List[str]
+    extracted_keywords: List[str]
     keyword_count: int
     match_percentage: float
     matched_locations: List[str]  # ✅ ADD THIS

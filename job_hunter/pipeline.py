@@ -180,8 +180,8 @@ async def run_pipeline(input_file: str, output_file: str):
                         extracted_locations = details.get("locations", [])
 
                         # --- Run description matcher
-                        is_desc_match, matched_keywords = match_description(
-                            description, config
+                        is_desc_match, matched_keywords, extracted_keywords = (
+                            match_description(description, config)
                         )
                         if not is_desc_match:
                             log("⏭️ Skipped — description matching failed", "DEBUG")
@@ -201,6 +201,7 @@ async def run_pipeline(input_file: str, output_file: str):
                             "description": description,
                             "yoe": yoe,
                             "matched_keywords": matched_keywords,
+                            "extracted_keywords": extracted_keywords,
                         }
 
                         score = calculate_score(job_data, config)
@@ -216,11 +217,11 @@ async def run_pipeline(input_file: str, output_file: str):
                             JobCSVField.JOB_LINK.value: clean_string_value(job_url),
                             JobCSVField.YOE.value: yoe if yoe is not None else "",
                             JobCSVField.MATCH_PERCENTAGE.value: score,
-                            JobCSVField.MATCHED_KEYWORDS_COUNT.value: len(
-                                matched_keywords
+                            JobCSVField.EXTRACTED_KEYWORDS_COUNT.value: len(
+                                extracted_keywords
                             ),
-                            JobCSVField.MATCHED_KEYWORDS.value: clean_string_value(
-                                ", ".join(matched_keywords)
+                            JobCSVField.EXTRACTED_KEYWORDS.value: clean_string_value(
+                                ", ".join(extracted_keywords)
                             ),
                             JobCSVField.EXTRACTED_LOCATIONS.value: clean_string_value(
                                 ", ".join(extracted_locations)
