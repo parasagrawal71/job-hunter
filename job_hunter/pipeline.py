@@ -18,7 +18,6 @@ from job_hunter.matcher import (
     match_locations,
     calculate_score,
 )
-from job_hunter.exporter import export_companies_with_zero_links
 from job_hunter.utils.log import log, set_log_level
 from job_hunter.utils.utils import clean_string_value
 from job_hunter.constants import (
@@ -26,7 +25,11 @@ from job_hunter.constants import (
     ErrorCSVField,
     CompanyWithZeroLinksCSVField,
 )
-from job_hunter.helpers import sort_csv_in_place, load_existing_job_links
+from job_hunter.helpers import (
+    sort_csv_in_place,
+    load_existing_job_links,
+    load_companies_from_output_file,
+)
 
 failed_companies = []
 error_file = "jobs_error.csv"
@@ -34,7 +37,7 @@ companies_with_zero_links = []
 companies_with_zero_links_file = "companies_with_zero_links.csv"
 
 # 🔑 GLOBAL CONCURRENCY LIMIT
-JOB_SEMAPHORE = asyncio.Semaphore(10)
+JOB_SEMAPHORE = asyncio.Semaphore(20)
 
 
 async def run_pipeline(input_file: str, output_file: str):
@@ -145,7 +148,6 @@ async def run_pipeline(input_file: str, output_file: str):
 
                 # --- Step 1: Extract job links
                 job_links = extract_job_links(listing_html, career_url)
-                is_company_links_found = False
 
                 log(f"⚙️ Processing {len(job_links)} job links in parallel", "DEBUG")
 
@@ -236,7 +238,6 @@ async def run_pipeline(input_file: str, output_file: str):
 
                 for result in results:
                     if result == "JOB_ALREADY_EXISTS":
-                        is_company_links_found = True
                         continue
 
                     if not result:
@@ -247,11 +248,11 @@ async def run_pipeline(input_file: str, output_file: str):
                     csvfile.flush()
 
                     existing_job_links.add(result[JobCSVField.JOB_LINK.value])
-                    is_company_links_found = True
                     log("✅ Job written to CSV")
                     serial_no += 1
 
-                if not is_company_links_found:
+                companies_from_file = load_companies_from_output_file(output_file)
+                if company not in companies_from_file:
                     companies_with_zero_links.append(
                         {"company": company, "career_url": career_url}
                     )

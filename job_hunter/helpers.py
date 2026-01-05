@@ -2,6 +2,7 @@ import csv
 from job_hunter.utils.log import log
 from job_hunter.constants import JobCSVField
 
+
 def sort_csv_in_place(csv_path: str):
     log("🔄 Sorting CSV before exit...")
 
@@ -43,3 +44,18 @@ def load_existing_job_links(csv_path: str) -> set:
     except FileNotFoundError:
         pass
     return existing_links
+
+
+# load company names from output file
+def load_companies_from_output_file(csv_path: str) -> set:
+    companies = set()
+    try:
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                company = row.get(JobCSVField.COMPANY.value)
+                if company:
+                    companies.add(company.strip())
+    except FileNotFoundError:
+        pass
+    return companies
