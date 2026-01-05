@@ -8,7 +8,6 @@ class JobCSVField(str, Enum):
     JOB_LINK = "job_link"
     YOE = "yoe"
     MATCH_PERCENTAGE = "match_percentage"
-    EXTRACTED_KEYWORDS_COUNT = "extracted_keywords_count"
     EXTRACTED_KEYWORDS = "extracted_keywords"
     EXTRACTED_LOCATIONS = "extracted_locations"
 

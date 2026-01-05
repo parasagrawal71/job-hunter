@@ -219,9 +219,6 @@ async def run_pipeline(input_file: str, output_file: str):
                             JobCSVField.JOB_LINK.value: clean_string_value(job_url),
                             JobCSVField.YOE.value: yoe if yoe is not None else "",
                             JobCSVField.MATCH_PERCENTAGE.value: score,
-                            JobCSVField.EXTRACTED_KEYWORDS_COUNT.value: len(
-                                extracted_keywords
-                            ),
                             JobCSVField.EXTRACTED_KEYWORDS.value: clean_string_value(
                                 ", ".join(extracted_keywords)
                             ),

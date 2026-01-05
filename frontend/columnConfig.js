@@ -17,7 +17,6 @@ window.HeaderMap = {
   JOB_TITLE: "job_title",
   YOE: "yoe",
   MATCH_PERCENTAGE: "match_percentage",
-  EXTRACTED_KEYWORDS_COUNT: "extracted_keywords_count",
   EXTRACTED_KEYWORDS: "extracted_keywords",
   EXTRACTED_LOCATIONS: "extracted_locations",
   JOB_LINK: "job_link",
@@ -46,12 +45,6 @@ window.COLUMN_CONFIG = {
     displayName: "Match %",
     columnWidth: "90px",
     columnAlign: "right",
-    hide: true, // HIDE COLUMN
-  },
-  [HeaderMap.EXTRACTED_KEYWORDS_COUNT]: {
-    displayName: "Keywords #",
-    columnWidth: "70px",
-    columnAlign: "center",
     hide: true, // HIDE COLUMN
   },
   [HeaderMap.EXTRACTED_KEYWORDS]: {
