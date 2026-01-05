@@ -8,39 +8,86 @@ from job_hunter.utils.utils import normalize_str_into_words, match_words
 
 def extract_job_links(listing_html: str, base_url: str) -> list[dict]:
     log("🔗 Extracting job links", "DEBUG")
-    """
-    Step 1: Extract title + job detail link from listing page
-    """
+
     soup = BeautifulSoup(listing_html, "html.parser")
     jobs = []
 
-    for a in soup.select("a"):
-        title = a.get_text(separator=" ", strip=True)  # 1️⃣ Try direct anchor text
-        # log(f"🔎 direct anchor text - title: {title}", "DEBUG")
+    for a in soup.select("a[href]"):
         href = a.get("href")
-
-        # 2️⃣ If anchor text is empty, try nested title-like elements
-        if not title:
-            # log(f"🔎 looking for nested title-like elements: {a}", "DEBUG")
-            # Find any descendant whose class contains "title"
-            title_candidate = a.select_one(
-                '[class*="title"], [class*="Title"], [class*="TITLE"]'
-            )
-            # log(f"🔎 title_candidate: {title_candidate}", "DEBUG")
-
-            if title_candidate:
-                title = title_candidate.get_text(separator=" ", strip=True)
-            log(f"🔎 title: {title}", "DEBUG")
-
-        if not title or not href:
+        if not href:
             continue
 
-        if len(title) < 6:
+        # 1️⃣ Try extracting title directly from <a>
+        anchor_text_raw = a.get_text(separator=" ", strip=True)
+        anchor_text = anchor_text_raw.lower()
+
+        if anchor_text in {"apply", "apply now", "view job"}:
+            title = None
+        else:
+            title = anchor_text_raw if len(anchor_text_raw) >= 6 else None
+
+        # 2️⃣ If title not found or weak, walk up parents and rank candidates
+        if not title or len(title) < 6:
+            parent = a.parent
+
+            for _ in range(4):  # walk up max 4 levels
+                if not parent:
+                    break
+
+                candidates = parent.select("h1, h2, h3, h4, h5, h6, p, span")
+
+                best_title = None
+                best_score = -1
+
+                for el in candidates:
+                    text = el.get_text(separator=" ", strip=True)
+                    if not text or len(text) < 6:
+                        continue
+
+                    lower = text.lower()
+
+                    # Skip CTA / noise
+                    if "apply" in lower:
+                        continue
+
+                    score = 0
+
+                    # Prefer semantic headings
+                    if el.name.startswith("h"):
+                        score += 100
+
+                    # Prefer longer, descriptive titles
+                    score += min(len(text), 60)
+
+                    # Penalize badge-like / category text
+                    if len(text.split()) <= 2:
+                        score -= 20
+
+                    # Penalize uppercase labels
+                    if text.isupper():
+                        score -= 10
+
+                    if score > best_score:
+                        best_score = score
+                        best_title = text
+
+                if best_title:
+                    title = best_title
+                    break
+
+                parent = parent.parent
+
+        if not title:
             continue
 
         job_url = urljoin(base_url, href)
 
-        jobs.append({"title": title, "link": job_url})
+        jobs.append(
+            {
+                "title": title,
+                "link": job_url,
+            }
+        )
 
     log(f"📦 Raw job links found: {len(jobs)}")
     return jobs
