@@ -1,7 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from job_hunter.crawler import fetch_html
+from job_hunter.crawler import fetch_html_single_page
 from job_hunter.utils.log import log
 from job_hunter.utils.utils import normalize_str_into_words, match_words
 
@@ -102,7 +102,7 @@ async def extract_job_details_and_locations(job_url: str, config) -> dict:
 
     Excludes footer-like sections generically.
     """
-    html, error = await fetch_html(job_url)
+    html, error = await fetch_html_single_page(job_url)
     if not html or error:
         return {
             "description": "",

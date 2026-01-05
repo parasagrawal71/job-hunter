@@ -179,6 +179,7 @@ async def run_pipeline(input_file: str, output_file: str):
                             job_url, config
                         )
                         description = details.get("description", "")
+                        extracted_locations = details.get("extracted_locations", [])
                         all_extracted_locations = details.get(
                             "all_extracted_locations", []
                         )
@@ -225,7 +226,11 @@ async def run_pipeline(input_file: str, output_file: str):
                                 ", ".join(extracted_keywords)
                             ),
                             JobCSVField.EXTRACTED_LOCATIONS.value: clean_string_value(
-                                ", ".join(all_extracted_locations)
+                                ", ".join(
+                                    extracted_locations
+                                    if len(extracted_locations) > 0
+                                    else all_extracted_locations
+                                )
                             ),
                         }
 

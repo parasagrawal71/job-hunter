@@ -87,6 +87,7 @@ async def fetch_html(url: str):
         log(f"⚠️ Reason: {error_msg}")
         return None, error_msg
 
+
 async def _expand_dynamic_listings(page):
     KEYWORDS = ["show more", "load more", "more jobs"]
     prev_anchor_count = 0
@@ -115,9 +116,7 @@ async def _expand_dynamic_listings(page):
         except Exception:
             break
 
-        prev_anchor_count = await page.evaluate(
-            "document.querySelectorAll('a').length"
-        )
+        prev_anchor_count = await page.evaluate("document.querySelectorAll('a').length")
 
 
 async def _find_element_by_text(page, keywords):
@@ -166,3 +165,54 @@ async def _find_element_by_text(page, keywords):
     }
     """
     return await page.evaluate_handle(script, keywords)
+
+
+async def fetch_html_single_page(url: str):
+    """
+    Robust HTML fetcher.
+
+    Returns:
+      html: str | None
+      error: str | None
+    NEVER throws.
+    """
+    try:
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                bypass_csp=True,
+                ignore_https_errors=True,
+            )
+            page = await context.new_page()
+
+            page.set_default_navigation_timeout(60000)
+            page.set_default_timeout(60000)
+
+            try:
+                await page.goto(
+                    url,
+                    wait_until="domcontentloaded",
+                    timeout=60000,
+                )
+
+                # ⏳ Small buffer to allow late JS rendering
+                await page.wait_for_timeout(1500)
+
+                html = await page.content()
+                return html, None
+
+            except (PlaywrightTimeoutError, PlaywrightError) as e:
+                error_msg = str(e).split("\n")[0]
+                log(f"⚠️ Playwright failed for URL: {url}")
+                log(f"⚠️ Reason: {error_msg}")
+                return None, error_msg
+
+            finally:
+                await context.close()
+                await browser.close()
+
+    except Exception as e:
+        error_msg = str(e).split("\n")[0]
+        log(f"⚠️ Playwright failed for URL: {url}")
+        log(f"⚠️ Reason: {error_msg}")
+        return None, error_msg
