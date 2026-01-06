@@ -2,6 +2,7 @@ import csv
 import time
 import re
 import asyncio
+import os
 
 from job_hunter.config import build_config
 from job_hunter.crawler import fetch_html
@@ -55,7 +56,7 @@ async def run_pipeline(input_file: str, output_file: str):
     # load existing jobs (append-only behavior)
     existing_job_links = load_existing_job_links(output_file)
     serial_no = len(existing_job_links) + 1
-    csv_exists = bool(existing_job_links)
+    # csv_exists = bool(existing_job_links) # this is not working
 
     # open error file
     error_csv = open(error_file, "w", newline="", encoding="utf-8")
@@ -83,7 +84,7 @@ async def run_pipeline(input_file: str, output_file: str):
         )
 
         # write header only if file is new
-        if not csv_exists:
+        if not os.path.exists(output_file):
             writer.writeheader()
 
         with open(input_file, newline="", encoding="utf-8") as f:

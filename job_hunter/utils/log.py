@@ -28,7 +28,8 @@ def set_log_level(level: str):
 
 def log(msg: str, level: str = "INFO"):
     timestamp = datetime.now().strftime("%H:%M:%S")
-    formatted = f"[{timestamp}] [{level}] {msg}"
+    # formatted = f"[{timestamp}] [{level}] {msg}"
+    formatted = f"[{level}] {msg}"
 
     # File
     with open(LOG_FILE_PATH, "a", encoding="utf-8") as f:
