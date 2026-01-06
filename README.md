@@ -19,7 +19,7 @@
 
 #### Steps to run:
 ##### Testing  
-> job-hunter --input input/companies_test.csv   
+> job-hunter --input input/companies_test.csv --output jobs_test.csv      
 
 > Open frontend/index.html for dashboard (Run it with Live Server)  
 
